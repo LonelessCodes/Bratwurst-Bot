@@ -1,20 +1,16 @@
-var time,
+let time,
 	origSTATS,
 	lastMonth,
 	lastYear,
-	chartDir,
-	Blender = require("./../blender"),
-	b3d = new Blender("E:/Programs/Blender/blender.exe"),
-	fs = require('fs'),
-	mkdirp = require('mkdirp');
+	chartDir;
+const BlenderJob = require("./../modules/blender")("E:\\Programs\\Blender\\blender.exe"),
+	fs = require("fs"),
+	mkdirp = require("mkdirp"),
+	path = require("path");
 
-var pathToChart = {
-
-};
-var infos = {
-
-};
-
+/**
+ * fixes
+ */
 Array.prototype.max = function () {
 	return Math.max.apply(null, this);
 };
@@ -42,6 +38,19 @@ Number.prototype.getMonth = function () {
 	return a.getMonth();
 };
 
+String.prototype.template = function (params) {
+	let string = this;
+	for (let key in params) {
+		string = string.replace(`{{${key}}}`, params[key]);
+	}
+	return string;
+};
+
+const paths = {
+	stats: path.resolve(__dirname + "/../database/STATS.txt")
+};
+const infos = {};
+
 /**
  * Create Dir for Maps
  */
@@ -64,7 +73,7 @@ Number.prototype.toMonth = function () {
 		return name[this];
 	}
 	return this;
-}
+};
 Number.prototype.getDaysOfLastMonth = function () {
 	var a = new Date(this);
 	var year = a.getFullYear();
@@ -73,16 +82,25 @@ Number.prototype.getDaysOfLastMonth = function () {
 		month = 12;
 		year = year - 1;
 	}
-    return new Date(year, month, 0).getDate();
-}
+	return new Date(year, month, 0).getDate();
+};
 Number.prototype.getDaysOfMonth = function () {
 	var a = new Date(this);
 	var year = a.getFullYear();
 	var month = a.getMonth();
-    return new Date(year, month, 0).getDate();
-}
+	return new Date(year, month, 0).getDate();
+};
 
-var sourceFunc = function (callback) {
+/**
+ * py templates
+ */
+const py = {
+	sources: fs.readFileSync(path.resolve(__dirname + "/py-template/sources.py"), "utf8"),
+	global: fs.readFileSync(path.resolve(__dirname + "/py-template/global.py"), "utf8"),
+	times: fs.readFileSync(path.resolve(__dirname + "/py-template/times.py"), "utf8")
+};
+
+const sourceFunc = function (callback) {
 	var localTime = new Date();
 	/**
 	 * Render Sources
@@ -91,7 +109,10 @@ var sourceFunc = function (callback) {
 	var sources = {};
 	for (var i = 0; i < origSTATS.length; i++) {
 		for (var elem = 0; elem < origSTATS[i]["array"].length; elem++) {
-			if (origSTATS[i]["array"][elem]["source"] && (time.getTime() - origSTATS[i]["array"][elem]["timestamp"]) < time.getTime().getDaysOfLastMonth() * 24 * 60 * 60 * 1000) {
+
+			// if not older than one month
+			if (origSTATS[i]["array"][elem]["source"] &&
+				time.getTime() - origSTATS[i]["array"][elem]["timestamp"] < time.getTime().getDaysOfLastMonth() * 24 * 60 * 60 * 1000) {
 				var s = origSTATS[i]["array"][elem]["source"].split(">")[1].split("<")[0].replace("Twitter ", "").replace("for ", "");
 				if (!sources[s]) sources[s] = 0;
 				sources[s]++;
@@ -116,51 +137,43 @@ var sourceFunc = function (callback) {
 		"value": [],
 		"name": []
 	};
-	for (var i = 0; i < 6; i++) {
-		perfectSource["value"].push(sourcesArray[i].value / numberSources * 100);
-		perfectSource["name"].push(sourcesArray[i].name);
+	for (let i = 0; i < 6; i++) {
+		if (sourcesArray[i]) {
+			perfectSource["value"].push(sourcesArray[i].value / numberSources * 100);
+			perfectSource["name"].push(sourcesArray[i].name);
+		}
 	}
 
-	var pyString = "" +
-		"import bpy\n" +
-		"import time\n" +
+	var pyString = py.sources.template({
+		data: JSON.stringify(perfectSource, null, 4),
+		lastMonth: lastMonth,
+		lastYear: lastYear,
+		renderTime: localTime.getTime()
+	});
 
-		"data = " + JSON.stringify(perfectSource, null, 4) + "\n" +
-
-		"bpy.data.objects['SourcesMax'].data.body = str(round(data[\"value\"][0], 1)) + \"%\"\n" +
-		"bpy.data.objects['SourcesMiddle'].data.body = str(round(data[\"value\"][0] / 2, 1)) + \"%\"\n" +
-		"bpy.data.objects['SourceText'].data.body = \"Most used apps to tweet about Bratwurst in " + lastMonth + ", " + lastYear + "\"\n\n" +
-
-		"for i in range(6):\n" +
-		"    bpy.data.objects['BarText.00' + str(i)].data.body = data[\"name\"][i]\n" +
-		"    bpy.data.objects['Bar.00' + str(i)].scale[1] = data[\"value\"][i] / data[\"value\"][0]\n" +
-
-		"time = \"generated in \" + str(round(time.time() * 1000) - " + localTime.getTime() + ") + \"ms\"\n" +
-		"bpy.data.objects['TimeTaken'].data.body = time";
-
-	fs.writeFile(chartDir + "/sources.py", pyString, function (err, data) {
+	fs.writeFile(chartDir + "/sources.py", pyString, err => {
 		if (err) return console.log(err);
 
-		b3d.renderImage(__dirname + "\\sources.blend", chartDir + "/sources.py", chartDir + "/sources.png", function (err) {
-			if (err) return console.log(err);
-			pathToChart.source = chartDir + "/sources0001.png";
-			infos.source = perfectSource["name"][0];
-			callback();
-		});
+		new BlenderJob(__dirname + "\\sources.blend")
+			.python(chartDir + "/sources.py")
+			.save(chartDir + "/sources.png", err => {
+				if (err) return console.log(err);
+				pathToChart.source = chartDir + "/sources0001.png";
+				infos.source = perfectSource["name"][0];
+				callback();
+			});
 	});
 };
 
-var globalFunc = function (callback) {
-	var localTime = new Date();
-	var globalAll = 0;
-	var global = {};
+const globalFunc = function (callback) {
+	let localTime = new Date();
+	let global = {};
 	for (var i = 0; i < origSTATS.length; i++) {
 		for (var elem = 0; elem < origSTATS[i]["array"].length; elem++) {
 			if (origSTATS[i]["array"][elem]["place"] && (time.getTime() - origSTATS[i]["array"][elem]["timestamp"]) < time.getTime().getDaysOfLastMonth() * 24 * 60 * 60 * 1000) {
 				var s = origSTATS[i]["array"][elem]["place"];
 				if (!global[s]) global[s] = 0;
 				global[s]++;
-				globalAll++;
 			}
 		}
 	}
@@ -171,7 +184,7 @@ var globalFunc = function (callback) {
 
 	var finalArray = [];
 	var values = [];
-	for (var i = 0; i < countries.length; i++) {
+	for (let i = 0; i < countries.length; i++) {
 		var value = 0;
 		for (var key in global) {
 			if (countries[i].id == key) value = global[key];
@@ -185,54 +198,27 @@ var globalFunc = function (callback) {
 
 	var max = values.max();
 
-	var pyString = "" +
-		"import bpy\n" +
-		"import time\n" +
+	var pyString = py.global.template({
+		data: JSON.stringify(finalArray, null, 4),
+		max: max,
+		lastMonth: lastMonth,
+		lastYear: lastYear,
+		renderTime: localTime.getTime()
+	});
 
-		"def withZero(number):\n" +
-		"    if number < 10:\n" +
-		"        return \"0\" + str(number)\n" +
-		"    else:\n" +
-		"        return str(number)\n" +
-
-		"def makeMaterial(name, diffuse):\n" +
-		"    mat = bpy.data.materials.new(name=name)\n" +
-		"    mat.diffuse_color = diffuse\n" +
-		"    mat.diffuse_intensity = 1.0 \n" +
-		"    mat.use_shadeless = True\n" +
-		"    return mat\n" +
-
-		"def setMaterial(ob, mat):\n" +
-		"    me = ob.data\n" +
-		"    me.materials.append(mat)\n" +
-
-		"data = " + JSON.stringify(finalArray, null, 4) + "\n" +
-
-		"max = " + max + "\n" +
-
-		"bpy.data.objects['Max'].data.body = str(max)\n" +
-		"bpy.data.objects['Min'].data.body = \"0\"\n" +
-		"bpy.data.objects['SourceText'].data.body = \"Number of Bratwurst tweets with geo tag sent in " + lastMonth + ", " + lastYear + " by country\"\n" +
-
-		"for i in data:\n" +
-		"    material = makeMaterial(\"World\", [1, 1 - (1 - .527231) * (i[\"value\"] / max), 1 - (1 - 0.073239) * (i[\"value\"] / max)])\n" +
-		"    object = bpy.data.objects[i[\"name\"]]\n" +
-		"    setMaterial(object, material)\n" +
-
-		"timeend = \"generated in \" + str(round(time.time() * 1000) - " + localTime.getTime() + ") + \"ms\"\n" +
-		"bpy.data.objects['TimeTaken'].data.body = timeend";
-
-	fs.writeFile(chartDir + "/global.py", pyString, function (err, data) {
+	fs.writeFile(chartDir + "/global.py", pyString, err => {
 		if (err) return console.log(err);
 
-		b3d.renderImage(__dirname + "\\global.blend", chartDir + "/global.py", chartDir + "/global.png", function (err) {
-			if (err) return console.log(err);
-			pathToChart.global = chartDir + "/global0001.png";
-			for (var i = 0; i < finalArray.length; i++) {
-				if (finalArray[i]["value"] == max) infos.global = countries[i].id;
-			}
-			callback();
-		});
+		new BlenderJob(__dirname + "\\global.blend")
+			.python(chartDir + "/global.py")
+			.save(chartDir + "/global.png", err => {
+				if (err) return console.log(err);
+				pathToChart.global = chartDir + "/global0001.png";
+				for (var i = 0; i < finalArray.length; i++) {
+					if (finalArray[i]["value"] == max) infos.global = countries[i].id;
+				}
+				callback();
+			});
 	});
 };
 
@@ -250,149 +236,111 @@ var timesFunc = function (callback) {
 	}
 
 	var hours = {};
-	for (var i = 0; i < times.length; i++) {
+	for (let i = 0; i < times.length; i++) {
 		var hour = times[i].getHour();
 		if (!hours[hour]) hours[hour] = 0;
 		hours[hour]++;
 	}
 
 	var days = {};
-	for (var i = 0; i < times.length; i++) {
+	for (let i = 0; i < times.length; i++) {
 		var date = times[i].getDate();
 		if (!days[date]) days[date] = 0;
 		days[date]++;
 	}
 
 	days.length = 0;
-	for (var key in days) days.length++;
+	for (let key in days) days.length++;
 	days.length += -1;
 
-	finalHours = [];
-	for (var i = 0; i < 12; i++) finalHours.push((hours["" + (i * 2)] + hours["" + (i * 2 + 1)]) / days.length);
+	const finalHours = [];
+	for (let i = 0; i < 12; i++) {
+		if (days.length > 0 && hours["" + (i * 2)] && hours["" + (i * 2 + 1)]) {
+			finalHours.push((hours["" + (i * 2)] + hours["" + (i * 2 + 1)]) / days.length);
+		}
+		
+	}
 	finalHours.reverse();
 
 	var allTimestamps = [];
-	for (var i = 0; i < origSTATS.length; i++) {
-		for (var elem = 0; elem < origSTATS[i]["array"].length; elem++) {
+	for (let i = 0; i < origSTATS.length; i++) {
+		for (let elem = 0; elem < origSTATS[i]["array"].length; elem++) {
 			allTimestamps.push(origSTATS[i]["array"][elem]["timestamp"]);
 		}
 	}
 
 	var months = {};
-	for (var i = 0; i < allTimestamps.length; i++) {
+	for (let i = 0; i < allTimestamps.length; i++) {
 		var month = allTimestamps[i].getMonth() + 1;
 		if (!months[month]) months[month] = 0;
 		months[month]++;
 	}
 
 	var timesMonth = [];
-	for (var i = 0; i < origSTATS.length; i++) {
-		for (var elem = 0; elem < origSTATS[i]["array"].length; elem++) {
-			var offset = -7200;
+	for (let i = 0; i < origSTATS.length; i++) {
+		for (let elem = 0; elem < origSTATS[i]["array"].length; elem++) {
+			let offset = -7200; // fixing the GMT+2
 			if (origSTATS[i]["array"][elem]["offset"]) offset += origSTATS[i]["array"][elem]["offset"];
 			timesMonth.push(origSTATS[i]["array"][elem]["timestamp"] + offset * 1000);
 		}
 	}
 
 	var daysMonth = {};
-	for (var i = 0; i < timesMonth.length; i++) {
-		var date = timesMonth[i].getDate();
-		var month = timesMonth[i].getMonth() + 1;
+	for (let i = 0; i < timesMonth.length; i++) {
+		const date = timesMonth[i].getDate();
+		const month = timesMonth[i].getMonth() + 1;
 		if (!daysMonth[month]) daysMonth[month] = {};
 		if (!daysMonth[month][date]) daysMonth[month][date] = 0;
 		daysMonth[month][date]++;
 	}
 
-	for (var i in daysMonth) {
+	for (let i in daysMonth) {
 		daysMonth[i].length = 0;
-		for (var key in daysMonth[i]) daysMonth[i].length++;
+		for (let key in daysMonth[i]) daysMonth[i].length++;
 		if (daysMonth[i].length > 1) daysMonth[i].length += -1;
 	}
 
 	var finalMonth = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-	for (var key in months) {
-		finalMonth[11 - parseInt(key) + 1] = months[key] / daysMonth[key].length;
+	for (let key in months) {
+		if (months[key] && daysMonth[key]) finalMonth[11 - parseInt(key) + 1] = months[key] / daysMonth[key].length;
 	}
 
 	var finalJSON = {
 		"time": finalHours,
 		"month": finalMonth
 	};
+	
+	var pyString = py.times.template({
+		data: JSON.stringify(finalJSON, null, 4),
+		maxTime: finalHours[0] >= 0 ? Math.round(finalHours.max()) : 0,
+		maxMonth: Math.round(finalMonth.max()),
+		lastMonth: lastMonth,
+		lastYear: lastYear,
+		renderTime: localTime.getTime()
+	});
 
-	var pyString = "" +
-		"import bpy\n" +
-		"import time\n" +
-
-		"def withZero(number):\n" +
-		"    if number < 10:\n" +
-		"        return \"0\" + str(number)\n" +
-		"    else:\n" +
-		"        return str(number)\n\n" +
-
-		"def makeMaterial(name, diffuse):\n" +
-		"    mat = bpy.data.materials.new(name=name)\n" +
-		"    mat.diffuse_color = diffuse\n" +
-		"    mat.diffuse_intensity = 1.0\n" +
-		"    mat.use_shadeless = True\n" +
-		"    return mat\n\n" +
-
-		"def setMaterial(ob, mat):\n" +
-		"    me = ob.data\n" +
-		"    me.materials.append(mat)\n\n" +
-
-		"def scale(obj, value):\n" +
-		"    obj.scale[0] = value\n" +
-		"    obj.scale[1] = value\n\n" +
-
-		"def changeColor(r, g, b, val, max):\n" +
-		"    return [1 - (1 - r) * (val / max), 1 - (1 - g) * (val / max), 1 - (1 - b) * (val / max)]\n\n" +
-
-		"data = " + JSON.stringify(finalJSON, null, 4) + "\n" +
-
-		"maxTime = " + Math.round(finalHours.max()) + "\n" +
-		"maxMonth = " + Math.round(finalMonth.max()) + "\n" +
-
-		"bpy.data.objects[\"DayMax\"].data.body = str(maxTime)\n" +
-		"bpy.data.objects[\"MonthMax\"].data.body = str(maxMonth)\n" +
-		"bpy.data.objects['Title'].data.body = \"Bratwurst Stats of " + lastMonth + ", " + lastYear + "\"\n" +
-
-		"elem = 0\n" +
-		"for i in data[\"time\"]:\n" +
-		"    material = makeMaterial(\"Time\", changeColor(1, 0.527231, 0.073239, i, maxTime))\n" +
-		"    object = bpy.data.objects[\"DayPie.0\" + withZero(elem)]\n" +
-		"    scale(object, (i / maxTime) / 3 * 2 + 1 / 3)\n" +
-		"    setMaterial(object, material)\n" +
-		"    elem += 1\n\n" +
-
-		"elem = 0\n" +
-		"for i in data[\"month\"]:\n" +
-		"    material = makeMaterial(\"Month\", changeColor(0.187063, 0.528533, 0.206574, i, maxMonth))\n" +
-		"    object = bpy.data.objects[\"MonthPie.0\" + withZero(elem)]\n" +
-		"    scale(object, (i / maxMonth) / 3 * 2 + 1 / 3)\n" +
-		"    setMaterial(object, material)\n" +
-		"    elem += 1\n\n" +
-
-		"timeend = \"generated in \" + str(round(time.time() * 1000) - " + localTime.getTime() + ") + \"ms\"\n" +
-		"bpy.data.objects['TimeTaken'].data.body = timeend";
-
-	fs.writeFile(chartDir + "/times.py", pyString, function (err, data) {
+	fs.writeFile(chartDir + "/times.py", pyString, err => {
 		if (err) return console.log(err);
 
-		b3d.renderImage(__dirname + "\\time.blend", chartDir + "/times.py", chartDir + "/times.png", function (err) {
-			if (err) return console.log(err);
-			pathToChart.times = chartDir + "/times0001.png";
-			var bestHour = [];
-			for (var key in hours) {
-				bestHour.push({
-					value: hours[key],
-					name: key
-				});
-			}
-			infos.times = bestHour.sort(function (a, b) {
-				return a.value - b.value;
-			}).reverse()[0].name;
-			callback();
-		});
+		new BlenderJob(path.resolve(__dirname + "/time.blend"))
+			.python(path.resolve(chartDir + "/times.py"))
+			.save(path.resolve(chartDir + "/times.png"), err => {
+				if (err) return console.log(err);
+				pathToChart.times = path.resolve(chartDir + "/times0001.png");
+
+				var bestHour = [];
+				for (var key in hours) {
+					bestHour.push({
+						value: hours[key],
+						name: key
+					});
+				}
+				const reversed = bestHour.sort(function (a, b) {
+					return a.value - b.value;
+				}).reverse()[0];
+				if (reversed) infos.times = reversed.name;
+				callback();
+			});
 	});
 };
 
@@ -427,32 +375,34 @@ var bestUserFunc = function (callback) {
 		"bpy.data.objects['Right'].particle_systems['ParticleSystem'].seed = " + Math.floor(Math.random() * 1000) + "\n" +
 		"bpy.data.objects['Left'].particle_systems['ParticleSystem'].seed = " + Math.floor(Math.random() * 1000);
 
-	fs.writeFile(chartDir + "/user.py", pyString, function (err, data) {
+	fs.writeFile(chartDir + "/user.py", pyString, err => {
 		if (err) return console.log(err);
 
-		b3d.renderAnim(__dirname + "\\user.blend", chartDir + "/user.py", chartDir + "/user/frame.png", {
-			start: 1,
-			end: 84
-		}, function (err) {
-			if (err) console.log(err);
-			callback(chartDir + "/user/frame.gif", {
-				user: user,
-				value: value
+		new BlenderJob(__dirname + "\\user.blend")
+			.python(chartDir + "/user.py")
+			.frame(1, 84)
+			.save(chartDir + "/user/frame.png", err => {
+				if (err) console.log(err);
+				callback(chartDir + "/user/frame.gif", {
+					user: user,
+					value: value
+				});
 			});
-		});
 	});
 };
 
+const pathToChart = {};
 var init = function (callback) {
 	time = new Date();
-	origSTATS = JSON.parse(fs.readFileSync(__dirname + '/../STATS.txt'));
+	origSTATS = JSON.parse(fs.readFileSync(paths.stats));
 
 	lastMonth = ((time.getMonth() - 1 == -1) ? 12 : (time.getMonth() - 1)).toMonth();
 	lastYear = ((time.getMonth() - 1 == -1) ? time.getFullYear() - 1 : time.getFullYear());
 
-	chartDir = __dirname + "/" + lastYear + "/" + lastMonth;
+	chartDir = __dirname + "/results/" + lastYear + "/" + lastMonth;
 
-	mkdirp(chartDir, function (err) {
+	mkdirp(chartDir, err => {
+		if (err) return console.log(err);
 		timesFunc(function () {
 			globalFunc(function () {
 				sourceFunc(function () {
@@ -467,6 +417,6 @@ module.exports = function () {
 	return {
 		charts: init,
 		user: bestUserFunc,
-		b3d: b3d
+		blender: BlenderJob
 	};
 };

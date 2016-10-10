@@ -1,8 +1,10 @@
 const fs = require("fs");
+const {resolve} = require("path");
+const logPath = resolve(__dirname + "/../console.log");
 
 function getTimeString(black) {
-	var d = new Date(),
-		time = d.getFullYear() + ".";
+	const d = new Date();
+	let time = d.getFullYear() + ".";
 
 	function cl(num, millsec) {
 		if (millsec) {
@@ -30,16 +32,14 @@ function getTimeString(black) {
 /**
  * Logger => in case of crashing device you always got a log file to show you what went wrong
  */
-var LOG = fs.readFileSync(__dirname + "/console.log") + "";
-function log(message1, message2, message3, message4, message5) {
-	var mes = [message1, message2, message3, message4, message5];
-
+function log(...messages) {
+	var LOG = fs.readFileSync(logPath) + "";
 	function convert() {
-		var string = "";
-		for (var i = 0; i < mes.length; i++) {
-			var elem = mes[i];
-			if (elem && typeof elem != "undefined") {
-				var end = false;
+		let string = "";
+		for (let i = 0; i < messages.length; i++) {
+			const elem = messages[i];
+			if (elem && typeof elem !== "undefined") {
+				let end = false;
 				switch (typeof elem) {
 				case "string":
 					string += elem;
@@ -60,12 +60,12 @@ function log(message1, message2, message3, message4, message5) {
 		return string;
 	}
 
-	var string = convert();
-	console.log(getTimeString() + string.substring(0, string.length - 1));
+	const string = convert();
+	console.log(getTimeString() + string);
 	LOG += getTimeString(true) + string;
-	fs.rename(__dirname + "/console.log", __dirname + "/console.log~", function (err) {
+	fs.rename(logPath, logPath + "~", function (err) {
 		if (err) throw err;
-		fs.writeFile(__dirname + "/console.log", LOG, "utf8");
+		fs.writeFile(logPath, LOG, "utf8");
 	});
 }
 

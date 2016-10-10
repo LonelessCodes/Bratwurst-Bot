@@ -1,16 +1,8 @@
 const exec = require("child_process").exec;
 let PATH;
-let working = false;
-const queue = [];
 
-function checkQueue() {
-	if (!working && queue.length > 0) {
-		queue[0]();
-		queue.splice(0, 1);
-	}
-	setTimeout(checkQueue, 2000);
-}
-checkQueue();
+const Queue = require("./queue");
+const queue = new Queue();
 
 class BlenderJob {
 	constructor(blendFile) {
@@ -44,27 +36,27 @@ class BlenderJob {
 		var execString = PATH + "-b " + this.blendFile;
 		if (this.pyFile) execString += " -P " + this.pyFile;
 		if (typeof output === "string") {
-			execString += " -o " + (output.split(".")[0]);
+			execString += " -o " + output.split(".")[0];
 			var format = "";
 			switch (output.split(".")[1]) {
-				case "png":
-					format = "PNG";
-					break;
-				case "jpg":
-					format = "JPEG";
-					break;
-				case "jpeg":
-					format = "JPEG";
-					break;
-				case "tif":
-					format = "TIFF";
-					break;
-				case "tiff":
-					format = "TIFF";
-					break;
-				case "bmp":
-					format = "BMP";
-					break;
+			case "png":
+				format = "PNG";
+				break;
+			case "jpg":
+				format = "JPEG";
+				break;
+			case "jpeg":
+				format = "JPEG";
+				break;
+			case "tif":
+				format = "TIFF";
+				break;
+			case "tiff":
+				format = "TIFF";
+				break;
+			case "bmp":
+				format = "BMP";
+				break;
 			}
 			execString += " -F " + (format);
 		}
@@ -75,22 +67,22 @@ class BlenderJob {
 			} else {
 				execString += " -f " + this.frameStart;
 			}
+		} else {
+			execString += " -f " + 1;
 		}
 
-		queue.push(() => {
-			working = true;
+		queue.push(done => {
 			console.log(execString);
 			exec(execString, { maxBuffer: 1024 * 5000 }, err => {
 				if (err) return callback(err);
 
 				if (this.frameEnd === void 0) {
 					if (callback) callback(null);
-					working = false;
 				} else {
 					exec("E:/web/nodejs/ImageMagick/convert.exe -delay " + (100 / 25) + " -loop 0 " + output.split(".")[0] + "*." + output.split(".")[1] + " " + output.split(".")[0] + ".gif", { maxBuffer: 1024 * 5000 }, err => {
 						if (err) return callback(err);
 						if (callback) callback(null);
-						working = false;
+						done();
 					});
 				}
 			});

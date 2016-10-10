@@ -1,5 +1,6 @@
 const Twitter = require("twit");
 const fs = require("fs");
+const {roll} = require("./utils");
 
 var client = new Twitter({
 	consumer_key: "1FsqFijsOg88basJ4a9jz3rBc",
@@ -17,33 +18,19 @@ module.exports.tweet = function (status, options, callback) {
 		if (options.media) {
 			params.media_ids = [];
 
-			var mediaUploads = new Array(options.media.length);
-			var mediaIds = [];
-
-			var checkLoaded = function () {
-				var yay = true;
-				for (var i = 0; i < mediaUploads.length; i++) {
-					if (!mediaUploads[i]) {
-						yay = false;
-						break;
-					}
-				}
-				if (yay) {
-					params.media_ids = mediaIds;
-					client.post("statuses/update", params, callback);
-				}
-			};
-			for (var i = 0; i < options.media.length; i++) {
-				var index = i + 0;
-				var media = fs.readFileSync(options.media[media], { encoding: "base64" });
-				client.post("media/upload", { media_data: media }, (err, data) => {
+			roll(options.media, (mediaPath, index, next) => {
+				fs.readFile(mediaPath, { encoding: "base64" }, (err, media) => {
 					if (err) return callback(err);
+					client.post("media/upload", { media_data: media }, (err, data) => {
+						if (err) return callback(err);
 
-					mediaIds.push(data.media_id_string);
-					mediaUploads[index] = true;
-					checkLoaded();
+						params.media_ids.push(data.media_id_string);
+						next();
+					});
 				});
-			}
+			}, () => {
+				client.post("statuses/update", params, callback);
+			});
 		} else {
 			client.post("statuses/update", params, callback);
 		}
@@ -57,13 +44,13 @@ module.exports.retweet = function (id, callback) {
 };
 
 module.exports.stream = function (track, callback) {
-	var stream = client.stream("statuses/filter", { track: track });
+	const stream = client.stream("statuses/filter", { track: track });
 	stream.on("tweet", callback);
 	return stream;
 };
 
-module.exports.followed = function (callback) {
-	var stream = client.stream("user");
+module.exports.onfollowed = function (callback) {
+	const stream = client.stream("user");
 	stream.on("follow", callback);
 	return stream;
 };
