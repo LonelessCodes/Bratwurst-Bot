@@ -1,0 +1,16 @@
+{
+	// Unter https://go.microsoft.com/fwlink/?LinkId=759670
+	// finden Sie die Dokumentation zum jsconfig.json-Format.
+	"compilerOptions": {
+		"target": "es6",
+		"module": "commonjs",
+		"allowSyntheticDefaultImports": true
+	},
+	"exclude": [
+		"node_modules",
+		"bower_components",
+		"jspm_packages",
+		"tmp",
+		"temp"
+	]
+}
