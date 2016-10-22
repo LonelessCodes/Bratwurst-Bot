@@ -5,40 +5,40 @@ const log = require("./log");
  * Initializing the cache
  * gotta polish this till it is a real cacher
  */
-var IGNORE = JSON.parse(readFileSync("database/IGNORE.txt")),
-	ALLUSERS = JSON.parse(readFileSync("database/ALLUSERS.txt")),
-	STATS = JSON.parse(readFileSync("database/STATS.txt"));
+let IGNORE = JSON.parse(readFileSync("../database/IGNORE.txt")),
+	ALLUSERS = JSON.parse(readFileSync("../database/ALLUSERS.txt")),
+	STATS = JSON.parse(readFileSync("../database/STATS.txt"));
 
 if (typeof IGNORE != "object" || typeof ALLUSERS != "object" || typeof STATS != "object") {
-	IGNORE = JSON.parse(readFileSync("database/IGNORE.txt1"));
-	ALLUSERS = JSON.parse(readFileSync("database/ALLUSERS.txt1"));
-	STATS = JSON.parse(readFileSync("database/STATS.txt1"));
+	IGNORE = JSON.parse(readFileSync("../database/IGNORE.txt1"));
+	ALLUSERS = JSON.parse(readFileSync("../database/ALLUSERS.txt1"));
+	STATS = JSON.parse(readFileSync("../database/STATS.txt1"));
 }
 
 function updateCache() {
-	rename("database/IGNORE.txt1", "database/IGNORE.txt2", function (err) {
+	rename("../database/IGNORE.txt1", "../database/IGNORE.txt2", err => {
 		if (err) return log(err);
-		rename("database/IGNORE.txt", "database/IGNORE.txt1", function (err) {
+		rename("../database/IGNORE.txt", "../database/IGNORE.txt1", err => {
 			if (err) return log(err);
-			writeFile("database/IGNORE.txt", JSON.stringify(IGNORE, null, 4), function (err) {
+			writeFile("../database/IGNORE.txt", JSON.stringify(IGNORE, null, 4), err => {
 				if (err) return log(err);
 			});
 		});
 	});
-	rename("database/ALLUSERS.txt1", "database/ALLUSERS.txt2", function (err) {
+	rename("../database/ALLUSERS.txt1", "../database/ALLUSERS.txt2", err => {
 		if (err) return log(err);
-		rename("database/ALLUSERS.txt", "database/ALLUSERS.txt1", function (err) {
+		rename("../database/ALLUSERS.txt", "../database/ALLUSERS.txt1", err => {
 			if (err) return log(err);
-			writeFile("database/ALLUSERS.txt", JSON.stringify(ALLUSERS, null, 4), function (err) {
+			writeFile("../database/ALLUSERS.txt", JSON.stringify(ALLUSERS, null, 4), err => {
 				if (err) return log(err);
 			});
 		});
 	});
-	rename("database/STATS.txt1", "database/STATS.txt2", function (err) {
+	rename("../database/STATS.txt1", "../database/STATS.txt2", err => {
 		if (err) return log(err);
-		rename("database/STATS.txt", "database/STATS.txt1", function (err) {
+		rename("../database/STATS.txt", "../database/STATS.txt1", err => {
 			if (err) return log(err);
-			writeFile("database/STATS.txt", JSON.stringify(STATS, null, 4), function (err) {
+			writeFile("../database/STATS.txt", JSON.stringify(STATS, null, 4), err => {
 				if (err) return log(err);
 			});
 		});
@@ -51,7 +51,7 @@ module.exports = {
 		return IGNORE.indexOf(name) > -1;
 	},
 	userExists(name) {
-		for (var i = 0; i < ALLUSERS.length; i++) {
+		for (let i = 0; i < ALLUSERS.length; i++) {
 			if (STATS[i]["name"] == name) {
 				return i;
 			}
@@ -91,7 +91,7 @@ module.exports = {
 		}
 		return module.exports;
 	},
-	delete(key, data) {
+	del(key, data) {
 		const index = IGNORE.indexOf(data);
 		switch (key) {
 		case "ignore":
@@ -107,7 +107,7 @@ module.exports = {
 		switch (key) {
 		case "stats":
 			if (STATS.length > 0)
-				for (var i = 0; i < STATS.length; i++)
+				for (let i = 0; i < STATS.length; i++)
 					if (STATS[i][sub] == data) {
 						return i;
 					}

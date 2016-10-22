@@ -190,7 +190,7 @@ var atStream = stream("@Bratwurst_bot", function (tweet) {
 			} else if (message.indexOf("notice me") == 15 && ignored) {
 
 				// Notice user
-				if (database.delete("ignore", username)) {
+				if (database.del("ignore", username)) {
 					log("@" + username + " noticed");
 					params.status += "Yay!";
 				}

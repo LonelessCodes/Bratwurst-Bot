@@ -58,5 +58,3 @@ module.exports.onfollowed = function (callback) {
 module.exports.updateBio = function (params, callback) {
 	client.post("account/update_profile", params, callback);
 };
-
-console.log(Twitter.prototype);
