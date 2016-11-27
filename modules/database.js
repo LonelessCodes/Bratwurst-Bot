@@ -1,52 +1,42 @@
 const {readFileSync, writeFile, rename} = require("fs");
-const log = require("./log");
+const dbpath = "database/";
 
 /**
  * Initializing the cache
  * gotta polish this till it is a real cacher
  */
-let IGNORE = JSON.parse(readFileSync("../database/IGNORE.txt")),
-	ALLUSERS = JSON.parse(readFileSync("../database/ALLUSERS.txt")),
-	STATS = JSON.parse(readFileSync("../database/STATS.txt"));
+let IGNORE =   JSON.parse(readFileSync(dbpath + "IGNORE.txt"));
+let ALLUSERS = JSON.parse(readFileSync(dbpath + "ALLUSERS.txt"));
+let STATS =    JSON.parse(readFileSync(dbpath + "STATS.txt"));
 
 if (typeof IGNORE != "object" || typeof ALLUSERS != "object" || typeof STATS != "object") {
-	IGNORE = JSON.parse(readFileSync("../database/IGNORE.txt1"));
-	ALLUSERS = JSON.parse(readFileSync("../database/ALLUSERS.txt1"));
-	STATS = JSON.parse(readFileSync("../database/STATS.txt1"));
+	IGNORE =   JSON.parse(readFileSync(dbpath + "IGNORE.txt1"));
+	ALLUSERS = JSON.parse(readFileSync(dbpath + "ALLUSERS.txt1"));
+	STATS =    JSON.parse(readFileSync(dbpath + "STATS.txt1"));
 }
 
 function updateCache() {
-	rename("../database/IGNORE.txt1", "../database/IGNORE.txt2", err => {
-		if (err) return log(err);
-		rename("../database/IGNORE.txt", "../database/IGNORE.txt1", err => {
-			if (err) return log(err);
-			writeFile("../database/IGNORE.txt", JSON.stringify(IGNORE, null, 4), err => {
-				if (err) return log(err);
-			});
+	rename(dbpath + "IGNORE.txt1", dbpath + "IGNORE.txt2", () => {
+		rename(dbpath + "IGNORE.txt", dbpath + "IGNORE.txt1", () => {
+			writeFile(dbpath + "IGNORE.txt", JSON.stringify(IGNORE));
 		});
 	});
-	rename("../database/ALLUSERS.txt1", "../database/ALLUSERS.txt2", err => {
-		if (err) return log(err);
-		rename("../database/ALLUSERS.txt", "../database/ALLUSERS.txt1", err => {
-			if (err) return log(err);
-			writeFile("../database/ALLUSERS.txt", JSON.stringify(ALLUSERS, null, 4), err => {
-				if (err) return log(err);
-			});
+	
+	rename(dbpath + "ALLUSERS.txt1", dbpath + "ALLUSERS.txt2", () => {
+		rename(dbpath + "ALLUSERS.txt", dbpath + "ALLUSERS.txt1", () => {
+			writeFile(dbpath + "ALLUSERS.txt", JSON.stringify(ALLUSERS));
 		});
 	});
-	rename("../database/STATS.txt1", "../database/STATS.txt2", err => {
-		if (err) return log(err);
-		rename("../database/STATS.txt", "../database/STATS.txt1", err => {
-			if (err) return log(err);
-			writeFile("../database/STATS.txt", JSON.stringify(STATS, null, 4), err => {
-				if (err) return log(err);
-			});
+
+	rename(dbpath + "STATS.txt1", dbpath + "STATS.txt2", () => {
+		rename(dbpath + "STATS.txt", dbpath + "STATS.txt1", () => {
+			writeFile(dbpath + "STATS.txt", JSON.stringify(STATS));
 		});
 	});
 }
 setInterval(updateCache, 1000 * 60 * 2);
 
-module.exports = {
+exports = module.exports = {
 	ignored(name) {
 		return IGNORE.indexOf(name) > -1;
 	},

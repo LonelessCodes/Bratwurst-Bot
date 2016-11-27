@@ -1,9 +1,10 @@
-let time,
-	origSTATS,
-	lastMonth,
-	lastYear,
-	chartDir;
-const BlenderJob = require("./../modules/blender")("E:\\Programs\\Blender\\blender.exe"),
+let time;
+let origSTATS;
+let lastMonth;
+let lastYear;
+let chartDir;
+const BlenderJob = require("./../modules/blender")(),
+	log = require("./../modules/log"),
 	fs = require("fs"),
 	mkdirp = require("mkdirp"),
 	path = require("path");
@@ -56,7 +57,7 @@ const infos = {};
  */
 Number.prototype.toMonth = function () {
 	if (this < 12) {
-		var name = [
+		const name = [
 			"January",
 			"February",
 			"March",
@@ -75,9 +76,9 @@ Number.prototype.toMonth = function () {
 	return this;
 };
 Number.prototype.getDaysOfLastMonth = function () {
-	var a = new Date(this);
-	var year = a.getFullYear();
-	var month = a.getMonth();
+	var time = new Date(this);
+	var year = time.getFullYear();
+	var month = time.getMonth();
 	if (month == 0) {
 		month = 12;
 		year = year - 1;
@@ -100,8 +101,8 @@ const py = {
 	times: fs.readFileSync(path.resolve(__dirname + "/py-template/times.py"), "utf8")
 };
 
-const sourceFunc = function (callback) {
-	var localTime = new Date();
+function sourceFunc(callback) {
+	const localTime = new Date();
 	/**
 	 * Render Sources
 	 */
@@ -144,7 +145,7 @@ const sourceFunc = function (callback) {
 		}
 	}
 
-	var pyString = py.sources.template({
+	const pyString = py.sources.template({
 		data: JSON.stringify(perfectSource, null, 4),
 		lastMonth: lastMonth,
 		lastYear: lastYear,
@@ -152,21 +153,23 @@ const sourceFunc = function (callback) {
 	});
 
 	fs.writeFile(chartDir + "/sources.py", pyString, err => {
-		if (err) return console.log(err);
+		if (err) return log(err);
 
 		new BlenderJob(__dirname + "\\sources.blend")
 			.python(chartDir + "/sources.py")
 			.save(chartDir + "/sources.png", err => {
-				if (err) return console.log(err);
+				if (err) return log(err);
+
 				pathToChart.source = chartDir + "/sources0001.png";
 				infos.source = perfectSource["name"][0];
-				callback();
+
+				callback(pathToChart.source, infos.source);
 			});
 	});
-};
+}
 
-const globalFunc = function (callback) {
-	let localTime = new Date();
+function globalFunc(callback) {
+	const localTime = new Date();
 	let global = {};
 	for (var i = 0; i < origSTATS.length; i++) {
 		for (var elem = 0; elem < origSTATS[i]["array"].length; elem++) {
@@ -178,7 +181,7 @@ const globalFunc = function (callback) {
 		}
 	}
 
-	var countries = [
+	const countries = [
 		{ id: "AE" }, { id: "AF" }, { id: "AL" }, { id: "AM" }, { id: "AO" }, { id: "AR" }, { id: "AT" }, { id: "AU" }, { id: "AZ" }, { id: "BA" }, { id: "BD" }, { id: "BE" }, { id: "BF" }, { id: "BG" }, { id: "BI" }, { id: "BJ" }, { id: "BN" }, { id: "BO" }, { id: "BR" }, { id: "BS" }, { id: "BT" }, { id: "BW" }, { id: "BY" }, { id: "BZ" }, { id: "CA" }, { id: "CD" }, { id: "CF" }, { id: "CG" }, { id: "CH" }, { id: "CI" }, { id: "CL" }, { id: "CM" }, { id: "CN" }, { id: "CO" }, { id: "CR" }, { id: "CU" }, { id: "CY" }, { id: "CZ" }, { id: "DE" }, { id: "DJ" }, { id: "DK" }, { id: "DO" }, { id: "DZ" }, { id: "EC" }, { id: "EE" }, { id: "EG" }, { id: "EH" }, { id: "ER" }, { id: "ES" }, { id: "ET" }, { id: "FK" }, { id: "FI" }, { id: "FJ" }, { id: "FR" }, { id: "GA" }, { id: "GB" }, { id: "GE" }, { id: "GF" }, { id: "GH" }, { id: "GL" }, { id: "GM" }, { id: "GN" }, { id: "GQ" }, { id: "GR" }, { id: "GT" }, { id: "GW" }, { id: "GY" }, { id: "HN" }, { id: "HR" }, { id: "HT" }, { id: "HU" }, { id: "ID" }, { id: "IE" }, { id: "IL" }, { id: "IN" }, { id: "IQ" }, { id: "IR" }, { id: "IS" }, { id: "IT" }, { id: "JM" }, { id: "JO" }, { id: "JP" }, { id: "KE" }, { id: "KG" }, { id: "KH" }, { id: "KP" }, { id: "KR" }, { id: "XK" }, { id: "KW" }, { id: "KZ" }, { id: "LA" }, { id: "LB" }, { id: "LK" }, { id: "LR" }, { id: "LS" }, { id: "LT" }, { id: "LU" }, { id: "LV" }, { id: "LY" }, { id: "MA" }, { id: "MD" }, { id: "ME" }, { id: "MG" }, { id: "MK" }, { id: "ML" }, { id: "MM" }, { id: "MN" }, { id: "MR" }, { id: "MW" }, { id: "MX" }, { id: "MY" }, { id: "MZ" }, { id: "NA" }, { id: "NC" }, { id: "NE" }, { id: "NG" }, { id: "NI" }, { id: "NL" }, { id: "NO" }, { id: "NP" }, { id: "NZ" }, { id: "OM" }, { id: "PA" }, { id: "PE" }, { id: "PG" }, { id: "PH" }, { id: "PL" }, { id: "PK" }, { id: "PR" }, { id: "PS" }, { id: "PT" }, { id: "PY" }, { id: "QA" }, { id: "RO" }, { id: "RS" }, { id: "RU" }, { id: "RW" }, { id: "SA" }, { id: "SB" }, { id: "SD" }, { id: "SE" }, { id: "SI" }, { id: "SJ" }, { id: "SK" }, { id: "SL" }, { id: "SN" }, { id: "SO" }, { id: "SR" }, { id: "SS" }, { id: "SV" }, { id: "SY" }, { id: "SZ" }, { id: "TD" }, { id: "TF" }, { id: "TG" }, { id: "TH" }, { id: "TJ" }, { id: "TL" }, { id: "TM" }, { id: "TN" }, { id: "TR" }, { id: "TT" }, { id: "TW" }, { id: "TZ" }, { id: "UA" }, { id: "UG" }, { id: "US" }, { id: "UY" }, { id: "UZ" }, { id: "VE" }, { id: "VN" }, { id: "VU" }, { id: "YE" }, { id: "ZA" }, { id: "ZM" }, { id: "ZW" }
 	];
 
@@ -207,12 +210,12 @@ const globalFunc = function (callback) {
 	});
 
 	fs.writeFile(chartDir + "/global.py", pyString, err => {
-		if (err) return console.log(err);
+		if (err) return log(err);
 
 		new BlenderJob(__dirname + "\\global.blend")
 			.python(chartDir + "/global.py")
 			.save(chartDir + "/global.png", err => {
-				if (err) return console.log(err);
+				if (err) return log(err);
 				pathToChart.global = chartDir + "/global0001.png";
 				for (var i = 0; i < finalArray.length; i++) {
 					if (finalArray[i]["value"] == max) infos.global = countries[i].id;
@@ -220,10 +223,10 @@ const globalFunc = function (callback) {
 				callback();
 			});
 	});
-};
+}
 
-var timesFunc = function (callback) {
-	var localTime = new Date();
+function timesFunc(callback) {
+	const localTime = new Date();
 	var times = [];
 	for (var i = 0; i < origSTATS.length; i++) {
 		for (var elem = 0; elem < origSTATS[i]["array"].length; elem++) {
@@ -250,7 +253,7 @@ var timesFunc = function (callback) {
 	}
 
 	days.length = 0;
-	for (let key in days) days.length++;
+	Object.keys(days).forEach(() => days.length++);
 	days.length += -1;
 
 	const finalHours = [];
@@ -258,7 +261,7 @@ var timesFunc = function (callback) {
 		if (days.length > 0 && hours["" + (i * 2)] && hours["" + (i * 2 + 1)]) {
 			finalHours.push((hours["" + (i * 2)] + hours["" + (i * 2 + 1)]) / days.length);
 		}
-		
+
 	}
 	finalHours.reverse();
 
@@ -296,7 +299,7 @@ var timesFunc = function (callback) {
 
 	for (let i in daysMonth) {
 		daysMonth[i].length = 0;
-		for (let key in daysMonth[i]) daysMonth[i].length++;
+		Object.keys(daysMonth[i]).forEach(() => daysMonth[i].length++);
 		if (daysMonth[i].length > 1) daysMonth[i].length += -1;
 	}
 
@@ -309,7 +312,7 @@ var timesFunc = function (callback) {
 		"time": finalHours,
 		"month": finalMonth
 	};
-	
+
 	var pyString = py.times.template({
 		data: JSON.stringify(finalJSON, null, 4),
 		maxTime: finalHours[0] >= 0 ? Math.round(finalHours.max()) : 0,
@@ -320,12 +323,12 @@ var timesFunc = function (callback) {
 	});
 
 	fs.writeFile(chartDir + "/times.py", pyString, err => {
-		if (err) return console.log(err);
+		if (err) return log(err);
 
 		new BlenderJob(path.resolve(__dirname + "/time.blend"))
 			.python(path.resolve(chartDir + "/times.py"))
 			.save(path.resolve(chartDir + "/times.png"), err => {
-				if (err) return console.log(err);
+				if (err) return log(err);
 				pathToChart.times = path.resolve(chartDir + "/times0001.png");
 
 				var bestHour = [];
@@ -342,9 +345,9 @@ var timesFunc = function (callback) {
 				callback();
 			});
 	});
-};
+}
 
-var bestUserFunc = function (callback) {
+function bestUserFunc(callback) {
 	var users = {};
 	for (var i = 0; i < origSTATS.length; i++) {
 		for (var elem = 0; elem < origSTATS[i]["array"].length; elem++) {
@@ -362,6 +365,8 @@ var bestUserFunc = function (callback) {
 			name: key
 		});
 	}
+	if (!usersArray[0]) return;
+	
 	usersArray = usersArray.sort(function (a, b) {
 		return a.value - b.value;
 	});
@@ -376,23 +381,23 @@ var bestUserFunc = function (callback) {
 		"bpy.data.objects['Left'].particle_systems['ParticleSystem'].seed = " + Math.floor(Math.random() * 1000);
 
 	fs.writeFile(chartDir + "/user.py", pyString, err => {
-		if (err) return console.log(err);
+		if (err) return log(err);
 
 		new BlenderJob(__dirname + "\\user.blend")
 			.python(chartDir + "/user.py")
 			.frame(1, 84)
 			.save(chartDir + "/user/frame.png", err => {
-				if (err) console.log(err);
+				if (err) log(err);
 				callback(chartDir + "/user/frame.gif", {
 					user: user,
 					value: value
 				});
 			});
 	});
-};
+}
 
 const pathToChart = {};
-var init = function (callback) {
+function createChart(callback) {
 	time = new Date();
 	origSTATS = JSON.parse(fs.readFileSync(paths.stats));
 
@@ -402,7 +407,7 @@ var init = function (callback) {
 	chartDir = __dirname + "/results/" + lastYear + "/" + lastMonth;
 
 	mkdirp(chartDir, err => {
-		if (err) return console.log(err);
+		if (err) return log(err);
 		timesFunc(function () {
 			globalFunc(function () {
 				sourceFunc(function () {
@@ -411,11 +416,11 @@ var init = function (callback) {
 			});
 		});
 	});
-};
+}
 
-module.exports = function () {
+exports = module.exports = function () {
 	return {
-		charts: init,
+		charts: createChart,
 		user: bestUserFunc,
 		blender: BlenderJob
 	};

@@ -1,6 +1,12 @@
 const fs = require("fs");
+const colors = require("colors");
+colors;
 const {resolve} = require("path");
 const logPath = resolve(__dirname + "/../console.log");
+
+if (!fs.existsSync(logPath)) {
+	fs.writeFileSync(logPath, "");
+}
 
 function getTimeString(black) {
 	const d = new Date();
@@ -33,13 +39,12 @@ function getTimeString(black) {
  * Logger => in case of crashing device you always got a log file to show you what went wrong
  */
 function log(...messages) {
-	var LOG = fs.readFileSync(logPath) + "";
+	let LOG = fs.readFileSync(logPath) || "";
 	function convert() {
 		let string = "";
 		for (let i = 0; i < messages.length; i++) {
 			const elem = messages[i];
 			if (elem && typeof elem !== "undefined") {
-				let end = false;
 				switch (typeof elem) {
 				case "string":
 					string += elem;
@@ -51,10 +56,9 @@ function log(...messages) {
 					string += elem ? "true" : "false";
 					break;
 				default:
-					try { string += elem; } catch (err) { end = true; }
+					try { string += elem; } catch (err) { break; }
 					break;
 				}
-				if (!end) string += "\n";
 			}
 		}
 		return string;
@@ -62,10 +66,11 @@ function log(...messages) {
 
 	const string = convert();
 	console.log(getTimeString() + string);
-	LOG += getTimeString(true) + string;
-	fs.rename(logPath, logPath + "~", function (err) {
-		if (err) throw err;
-		fs.writeFile(logPath, LOG, "utf8");
+	LOG += getTimeString(true) + string + "\n";
+	if (fs.existsSync(logPath))
+		fs.renameSync(logPath, logPath + "~");
+	fs.writeFileSync(logPath, LOG, {
+		encoding: "utf8"
 	});
 }
 

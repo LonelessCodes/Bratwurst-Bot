@@ -1,19 +1,18 @@
 {
   "name": "bratwurstbot",
-  "version": "3.0.5",
+  "version": "3.1a",
   "description": "A bot that retweets all things bratwurst",
-  "main": "main.js",
+  "main": "master.js",
   "dependencies": {
-    "cluster": "^0.7.7",
     "colors": "^1.1.2",
     "fs": "0.0.2",
     "mkdirp": "^0.5.1",
     "tree-kill": "^1.1.0",
-    "twit": "^2.2.4"
+    "twit": "^2.2.5"
   },
   "devDependencies": {},
   "scripts": {
-    "test": "node main.js"
+    "test": "node master.js"
   },
   "keywords": [
     "bratwurst",
@@ -22,5 +21,13 @@
     "blender"
   ],
   "author": "Christian Schäfer",
-  "license": "MIT"
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/LonelessCodes/Bratwurst-Bot.git"
+  },
+  "bugs": {
+    "url": "https://github.com/LonelessCodes/Bratwurst-Bot/issues"
+  },
+  "homepage": "https://github.com/LonelessCodes/Bratwurst-Bot#readme"
 }

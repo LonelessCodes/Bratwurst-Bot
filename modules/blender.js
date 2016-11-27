@@ -1,6 +1,8 @@
 const exec = require("child_process").exec;
 let PATH;
 
+const path = require("path");
+
 const Queue = require("./queue");
 const queue = new Queue();
 
@@ -37,28 +39,28 @@ class BlenderJob {
 		if (this.pyFile) execString += " -P " + this.pyFile;
 		if (typeof output === "string") {
 			execString += " -o " + output.split(".")[0];
-			var format = "";
-			switch (output.split(".")[1]) {
-			case "png":
+			var format;
+			switch (path.extname(output)) {
+			case ".png":
 				format = "PNG";
 				break;
-			case "jpg":
+			case ".jpg":
 				format = "JPEG";
 				break;
-			case "jpeg":
+			case ".jpeg":
 				format = "JPEG";
 				break;
-			case "tif":
+			case ".tif":
 				format = "TIFF";
 				break;
-			case "tiff":
+			case ".tiff":
 				format = "TIFF";
 				break;
-			case "bmp":
+			case ".bmp":
 				format = "BMP";
 				break;
 			}
-			execString += " -F " + (format);
+			if (format) execString += " -F " + format;
 		}
 		if (this.frameStart) {
 			if (this.frameEnd) {
@@ -72,14 +74,13 @@ class BlenderJob {
 		}
 
 		queue.push(done => {
-			console.log(execString);
 			exec(execString, { maxBuffer: 1024 * 5000 }, err => {
 				if (err) return callback(err);
 
 				if (this.frameEnd === void 0) {
 					if (callback) callback(null);
 				} else {
-					exec("E:/web/nodejs/ImageMagick/convert.exe -delay " + (100 / 25) + " -loop 0 " + output.split(".")[0] + "*." + output.split(".")[1] + " " + output.split(".")[0] + ".gif", { maxBuffer: 1024 * 5000 }, err => {
+					exec(`E:/web/nodejs/ImageMagick/convert.exe -delay ${(100 / 25)} -loop 0 ${output.split(".")[0]}*.${output.split(".")[1]} ${output.split(".")[0]}.gif`, { maxBuffer: 1024 * 5000 }, err => {
 						if (err) return callback(err);
 						if (callback) callback(null);
 						done();
