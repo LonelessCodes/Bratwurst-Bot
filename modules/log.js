@@ -68,7 +68,7 @@ function log(...messages) {
 	console.log(getTimeString() + string);
 	LOG += getTimeString(true) + string + "\n";
 	if (fs.existsSync(logPath))
-		fs.renameSync(logPath, logPath + "~");
+		fs.renameSync(logPath, logPath + "1");
 	fs.writeFileSync(logPath, LOG, {
 		encoding: "utf8"
 	});

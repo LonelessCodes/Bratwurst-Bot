@@ -6,5 +6,5 @@ database/
 tmp/
 console.log
 *.log
-*.log~
+*.log1
 keys.json
