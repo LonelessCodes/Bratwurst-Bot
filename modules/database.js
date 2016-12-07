@@ -1,126 +1,84 @@
-const {readFileSync, writeFile, rename} = require("fs");
+const {readdirSync, readFileSync, writeFile, rename} = require("fs");
 const dbpath = "database/";
 
 /**
  * Initializing the cache
  * gotta polish this till it is a real cacher
  */
-let IGNORE =   JSON.parse(readFileSync(dbpath + "IGNORE.txt"));
-let ALLUSERS = JSON.parse(readFileSync(dbpath + "ALLUSERS.txt"));
-let STATS =    JSON.parse(readFileSync(dbpath + "STATS.txt"));
-
-if (typeof IGNORE != "object" || typeof ALLUSERS != "object" || typeof STATS != "object") {
-	IGNORE =   JSON.parse(readFileSync(dbpath + "IGNORE.txt1"));
-	ALLUSERS = JSON.parse(readFileSync(dbpath + "ALLUSERS.txt1"));
-	STATS =    JSON.parse(readFileSync(dbpath + "STATS.txt1"));
-}
+const db = {};
+const files = readdirSync(dbpath).filter(file => {
+	const name = file.toLowerCase().replace(".txt", "");
+	if (file.indexOf(".txt1") > -1 || file.indexOf(".txt2") > -1) 
+		return false;
+	try {
+		db[name] = JSON.parse(readFileSync(dbpath + file));
+	} catch (err) {
+		db[name] = JSON.parse(readFileSync(dbpath + file + "1"));
+	}
+	return true;
+});
 
 function updateCache() {
-	rename(dbpath + "IGNORE.txt1", dbpath + "IGNORE.txt2", () => {
-		rename(dbpath + "IGNORE.txt", dbpath + "IGNORE.txt1", () => {
-			writeFile(dbpath + "IGNORE.txt", JSON.stringify(IGNORE));
-		});
-	});
-	
-	rename(dbpath + "ALLUSERS.txt1", dbpath + "ALLUSERS.txt2", () => {
-		rename(dbpath + "ALLUSERS.txt", dbpath + "ALLUSERS.txt1", () => {
-			writeFile(dbpath + "ALLUSERS.txt", JSON.stringify(ALLUSERS));
-		});
-	});
-
-	rename(dbpath + "STATS.txt1", dbpath + "STATS.txt2", () => {
-		rename(dbpath + "STATS.txt", dbpath + "STATS.txt1", () => {
-			writeFile(dbpath + "STATS.txt", JSON.stringify(STATS));
-		});
+	Object.keys(db).forEach((name, i) => {
+		const file = files[i];
+		rename(dbpath + file + "1", dbpath + file + "2", () => 
+			rename(dbpath + file, dbpath + file + "1", () => 
+				writeFile(dbpath + file, JSON.stringify(db[name]))));
 	});
 }
 setInterval(updateCache, 1000 * 60 * 2);
 
 exports = module.exports = {
 	ignored(name) {
-		return IGNORE.indexOf(name) > -1;
+		return db["ignore"].includes(name);
 	},
 	userExists(name) {
-		for (let i = 0; i < ALLUSERS.length; i++) {
-			if (STATS[i]["name"] == name) {
-				return i;
-			}
-		}
+		for (let i = 0; i < db["allusers"].length; i++) 
+			if (db["stats"][i]["name"] == name) return i;
 	},
 	push(key, data) {
-		switch (key) {
-		case "stats":
-			STATS.push(data);
-			return STATS.length - 1;
-		case "users":
-			ALLUSERS.push(data);
-			return STATS.length - 1;
-		case "ignore":
-			IGNORE.push(data);
-			return STATS.length - 1;
-		}
+		db[key].push(data);
+		return db[key].length - 1;
 	},
 	update(key, index, data) {
 		switch (key) {
 		case "stats":
-			if(STATS[index])		
+			if(db["stats"][index])		
 				for (let key in data) {
-					STATS[index][key] = data[key];
+					db["stats"][index][key] = data[key];
 				}
 			break;
-		case "users":
-			if(ALLUSERS[index]){
-				ALLUSERS[index] = data;
-			}
-			break;
-		case "ignore":
-			if(IGNORE[index]){
-				IGNORE[index] = data;
+		default:
+			if(db[key][index]){
+				db[key][index] = data;
 			}
 			break;
 		}
 		return module.exports;
 	},
 	del(key, data) {
-		const index = IGNORE.indexOf(data);
-		switch (key) {
-		case "ignore":
-			if (index > -1) {
-				IGNORE.splice(index, 1);
-				return true;
-			} else {
-				return false;
-			}
+		const index = db[key].indexOf(data);
+		if (index > -1) {
+			db[key].splice(index, 1);
+			return true;
+		} else {
+			return false;
 		}
 	},
 	get(key, data, sub) {
 		switch (key) {
 		case "stats":
-			if (STATS.length > 0)
-				for (let i = 0; i < STATS.length; i++)
-					if (STATS[i][sub] == data) {
+			if (db["stats"].length > 0)
+				for (let i = 0; i < db["stats"].length; i++)
+					if (db["stats"][i][sub] == data) {
 						return i;
 					}
 		}
 	},
 	length(key) {
-		switch (key) {
-		case "stats":
-			return STATS.length;
-		case "users":
-			return ALLUSERS.length;
-		case "ignore":
-			return IGNORE.length;
-		}
+		return db[key].length;
 	},
 	byIndex(key, index) {
-		switch (key) {
-		case "stats":
-			return STATS[index];
-		case "users":
-			return ALLUSERS[index];
-		case "ignore":
-			return IGNORE[index];
-		}
+		return db[key][index];
 	}
 };

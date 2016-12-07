@@ -7,7 +7,7 @@ class Queue {
 	push(func) {
 		//add callback to the queue
 		this.queue.push(() => {
-			func(this.next());
+			func(this.next);
 		});
 
 		if (!this.running) {
