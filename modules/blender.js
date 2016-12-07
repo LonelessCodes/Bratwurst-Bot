@@ -75,9 +75,13 @@ class BlenderJob {
 
 		queue.push(done => {
 			exec(execString, { maxBuffer: 1024 * 5000 }, err => {
-				if (err) return callback(err);
+				if (err) {
+					done();
+					return callback(err);
+				}
 
 				if (this.frameEnd === void 0) {
+					done();
 					if (callback) callback(null);
 				} else {
 					exec(`E:/web/nodejs/ImageMagick/convert.exe -delay ${(100 / 25)} -loop 0 ${output.split(".")[0]}*.${output.split(".")[1]} ${output.split(".")[0]}.gif`, { maxBuffer: 1024 * 5000 }, err => {
