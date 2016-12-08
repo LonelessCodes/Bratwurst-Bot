@@ -84,7 +84,7 @@ class BlenderJob {
 					done();
 					if (callback) callback(null);
 				} else {
-					exec(`E:/web/nodejs/ImageMagick/convert.exe -delay ${(100 / 25)} -loop 0 ${output.split(".")[0]}*.${output.split(".")[1]} ${output.split(".")[0]}.gif`, { maxBuffer: 1024 * 5000 }, err => {
+					exec(`convert -delay ${(100 / 25)} -loop 0 ${output.split(".")[0]}*.${output.split(".")[1]} ${output.split(".")[0]}.gif`, { maxBuffer: 1024 * 5000 }, err => {
 						if (err) return callback(err);
 						if (callback) callback(null);
 						done();

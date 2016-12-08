@@ -8,7 +8,7 @@ const dbpath = "database/";
 const db = {};
 const files = readdirSync(dbpath).filter(file => {
 	const name = file.toLowerCase().replace(".txt", "");
-	if (file.indexOf(".txt1") > -1 || file.indexOf(".txt2") > -1) 
+	if (file.indexOf(".txt1") > -1 || file.indexOf(".txt2") > -1)
 		return false;
 	try {
 		db[name] = JSON.parse(readFileSync(dbpath + file));
@@ -54,7 +54,12 @@ exports = module.exports = {
 			}
 			break;
 		}
-		return module.exports;
+		return {
+			push(keyarr, data) {
+				db[key][index][keyarr].push(data);
+				return db[key][index][keyarr].length - 1;
+			}
+		};
 	},
 	del(key, data) {
 		const index = db[key].indexOf(data);

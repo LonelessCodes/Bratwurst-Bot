@@ -45,7 +45,7 @@ const bratwurst = stream("bratwurst", tweetObj => {
 			name: username,
 			array: []
 		});
-		database.push("users", username);
+		database.push("allusers", username);
 	}
 	database
 		.update("stats", exists, {
