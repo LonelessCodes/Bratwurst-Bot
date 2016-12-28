@@ -1,7 +1,7 @@
-const {tweet, updateBio} = require("./../modules/twitter");
-const chart = require("./../charts/charts")();
-const fs = require("fs");
+const {tweet, updateBio, client} = require("./../modules/twitter");
+const chart = require("./../charts/charts");
 const {triggerAt} = require("./../modules/utils");
+const database = require("./../modules/database");
 
 /**
  * Logger => in case of crashing device you always got a log file to show you what went wrong
@@ -26,7 +26,13 @@ Number.prototype.getDaysOfMonth = function () {
  * tweet monthly stats
  */
 
-const t = (new Date().getTime().getDaysOfMonth() - new Date().getDate()) * 1000 * 60 * 60 * 24;
+let nextMonth = new Date(new Date().getTime() + 1000 * 3600 * 24 * new Date().getTime().getDaysOfMonth());
+nextMonth.setDate(0);
+nextMonth.setHours(0);
+nextMonth.setMinutes(0);
+nextMonth.setSeconds(0);
+nextMonth.setMilliseconds(0);
+let t = nextMonth.getTime() - new Date().getTime();
 
 function month() {
 	const time = new Date();
@@ -44,30 +50,33 @@ function month() {
 		}, err => {
 			if (err) return log(err);
 			log(string, (string.length + 23 <= 140));
-
-			chart.user((file, dataf) => {
-				tweet("Top Bratwurst tweeter of the month is @" + dataf.user + " with " + dataf.value + " tweets. Congratulations!!!", {
-					media: [file]
-				}, (err, data) => {
-					setTimeout(month, new Date().getTime().getDaysOfMonth() * 1000 * 60 * 60 * 24);
-					if (err) return log(err);
-					log("Top Bratwurst tweeter of the month is @" + dataf.user + " with " + dataf.value + " tweets. Congratulations!!!", ("Top Bratwurst tweeter of the month is @" + data.user + " with " + data.value + " tweets. Congratulations!!!".length + 23 <= 140));
-				});
-			});
+		});
+	}, ({path, user, value}) => {
+		tweet("Top Bratwurst tweeter of the month is @" + user + " with " + value + " tweets. Congratulations!!!", {
+			media: [path]
+		}, err => {
+			t = t + 1000 * 3600 * 24 * new Date().getTime().getDaysOfMonth();
+			setTimeout(month, t);
+			console.log(new Date(t));
+			if (err) return log(err);
+			log("Top Bratwurst tweeter of the month is @" + user + " with " + value + " tweets. Congratulations!!!", "Top Bratwurst tweeter of the month is @" + user + " with " + value + " tweets. Congratulations!!!".length + 23 <= 140 ? "shortened" : "");
 		});
 	});
 }
 
 setTimeout(month, t);
+console.log(new Date(t), nextMonth);
 
 /**
  * Update Bio
  */
 function bio() {
-	var text = "Retweeting all things Bratwurst. " + JSON.parse(fs.readFileSync(__dirname + "\\..\\database\\ALLUSERS.txt")).length + " users have tweeted about bratwurst so far. \"@Bratwurst_bot help\" for help. Bot by @LonelessArt. Current version: " + require("./../package.json").version;
+	database.ref("users").once("value", snapshot => {
+		const text = `Retweeting all things Bratwurst. ${snapshot.numChildren()} users have tweeted about bratwurst so far. "@Bratwurst_bot help" for help. Bot by @LonelessArt. v${require("./../package.json").version}`;
 
-	updateBio({ description: text }, function (err) {
-		if (err) log(err);
+		updateBio({ description: text }, err => {
+			if (err) log(err);
+		});
 	});
 }
 bio();
@@ -78,39 +87,72 @@ setInterval(bio, 1000 * 60 * 30);
  */
 function dailyReport() {
 	const time = new Date();
-	const STATS = JSON.parse(fs.readFileSync(__dirname + "\\..\\database\\STATS.txt"));
-	const IGNORE = JSON.parse(fs.readFileSync(__dirname + "\\..\\database\\IGNORE.txt"));
-	var rank = [],
-		rankName = [],
-		rankNumber = [];
-	STATS.forEach((stat, i) => {
-		if (!IGNORE.includes(stat.name)) {
-			var length = 0;
-			for (var arr = 0; arr < stat.array.length; arr++)
-				if (stat.array[arr].timestamp > (time.getTime() - 86400000))
-					length++;
-			if (length > 0) {
-				rank.push(length);
-				rankName.push(stat.name);
-				rankNumber.push(i);
-			}
-		}
-	});
+	
+	new Promise((resolve, reject) => {
+		// fetch data
+		const tweets = database.ref("tweets");
+		const ignored = database.ref("ignored");
 
-	var name = rankName[rank.indexOf(rank.max())],
-		number = rank.max();
+		tweets.orderByChild("timestamp").startAt(Date.now() - 1000 * 3600 * 24).once("value", tweets => {
+			ignored.once("value", ignored => {
+				// new tweet objects will save the User ID instead of the screen_name, to
+				// to go extra sure, but I still have to support screen_name-only entries
+				ignored = Object.keys(ignored.val()).map(key => key);
+				tweets = tweets.val();
+				tweets = Object.keys(tweets).map(key => tweets[key]);
 
-	if (!name) return;
+				let users = {};
+				tweets.filter(tweet => {
+					if (!ignored.id.includes(tweet.user.id) || !ignored.name.includes(tweet.user.screen_name))
+						return true;
+					return false;
+				}).forEach(tweet => {
+					const index = tweet.user.id || tweet.user.screen_name;
+					if (users[index]) users[index].length++;
+					else users[index] = {
+						length: 1,
+						id: tweet.user.id,
+						name: tweet.user.screen_name
+					};
+				});
+				users = Object.keys(users).map(key => {
+					return {
+						length: users[key].length,
+						id: users[key].id,
+						name: users[key].name
+					};
+				}).sort((a, b) => {
+					return b.length - a.length;
+				});
 
-	let string = "It is once again the end of the day. Top Bratwurst Tweeter of the last 24 hours is @" + name + " with " + number + " ";
-	if (number == 1) string += "tweet";
-	else string += "tweets";
-	string += ". Congratulations!";
-	string += " [" + (new Date().getTime() - time) + "ms]";
+				const number = users[0].length;
+				const id = users[0].id;
 
-	tweet(string, function () {
-		log(string);
-		triggerAt(new Date().setHours(0), dailyReport);
+				if (!users[0].name) return reject();
+
+				client.get("users/show", {
+					user_id: id
+				}, (err, data) => {
+					if (err) return reject();
+					resolve({
+						name: data.screen_name,
+						number: number
+					});
+				});
+			});
+		});
+	}).then(({name, number}) => {
+		// tweet data
+		let string =
+			`It is once again the end of the day. Top Bratwurst Tweeter of the last 24 hours is @${name} with ${number} ${number === 1 ? "tweet" : "tweets"}. Congratulations!`;
+		string += " [" + (new Date().getTime() - time.getTime()) + "ms]";
+
+		tweet(string, function () {
+			log(string);
+			triggerAt(new Date().setHours(0), dailyReport);
+		});
+	}).catch(() => {
+		log("Daily Report couldn't be created");
 	});
 }
 triggerAt(new Date().setHours(0), dailyReport);

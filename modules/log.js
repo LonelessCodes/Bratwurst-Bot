@@ -1,77 +1,64 @@
-const fs = require("fs");
+const {appendFileSync} = require("fs");
 const colors = require("colors");
-colors;
-const {resolve} = require("path");
-const logPath = resolve(__dirname + "/../console.log");
+const logPath = require("path").resolve(__dirname + "/../console.log");
 
-if (!fs.existsSync(logPath)) {
-	fs.writeFileSync(logPath, "");
+/**
+ * Fits the length of the input string to the specified length.
+ * E.g. Useful to fit a 6bit string (each char either 1 or 0) to an 8bit string
+ */
+function toString(input, length) {
+	input = input.toString ? input.toString() : input;
+	let string = "";
+	for (let i = 0; i < length - input.length; i++) string += "0";
+	string += input;
+	return string;
 }
 
-function getTimeString(black) {
+function getTimeString(blank) {
 	const d = new Date();
-	let time = d.getFullYear() + ".";
 
-	function cl(num, millsec) {
-		if (millsec) {
-			if (num < 100) {
-				if (num < 10) return "00" + num;
-				else return "0" + num;
-			} else return num;
-		} else {
-			if (num < 10) return "0" + num;
-			else return num;
+	const time =
+		toString(d.getMonth() + 1, 2) + "." +
+		toString(d.getDate(), 2) + " " +
+		toString(d.getHours(), 2) + ":" +
+		toString(d.getMinutes(), 2) + ":" +
+		toString(d.getSeconds(), 2) + ":" +
+		toString(d.getMilliseconds(), 3);
+
+	if (blank) return time + "> ";
+	else return colors.red.bold(time) + "> ";
+}
+
+function convert(messages) {
+	let string = "";
+	for (let i = 0; i < messages.length; i++) {
+		const elem = messages[i];
+		if (elem && typeof elem !== "undefined") {
+			switch (typeof elem) {
+			case "string":
+				string += elem;
+				break;
+			case "number":
+				string += elem.toString();
+				break;
+			case "boolean":
+				string += elem ? "true" : "false";
+				break;
+			default:
+				try { string += elem; } catch (err) { break; }
+				break;
+			}
 		}
 	}
-
-	time += cl(d.getMonth() + 1) + "." +
-		cl(d.getDate()) + " " +
-		cl(d.getHours()) + ":" +
-		cl(d.getMinutes()) + ":" +
-		cl(d.getSeconds()) + ":" +
-		cl(d.getMilliseconds(), true);
-
-	if (black) return "<" + time + "> ";
-	else return "<" + time.red + "> ";
+	return string;
 }
 
 /**
  * Logger => in case of crashing device you always got a log file to show you what went wrong
  */
 function log(...messages) {
-	let LOG = fs.readFileSync(logPath) || "";
-	function convert() {
-		let string = "";
-		for (let i = 0; i < messages.length; i++) {
-			const elem = messages[i];
-			if (elem && typeof elem !== "undefined") {
-				switch (typeof elem) {
-				case "string":
-					string += elem;
-					break;
-				case "number":
-					string += elem.toString();
-					break;
-				case "boolean":
-					string += elem ? "true" : "false";
-					break;
-				default:
-					try { string += elem; } catch (err) { break; }
-					break;
-				}
-			}
-		}
-		return string;
-	}
-
-	const string = convert();
+	const string = convert(messages);
 	console.log(getTimeString() + string);
-	LOG += getTimeString(true) + string + "\n";
-	if (fs.existsSync(logPath))
-		fs.renameSync(logPath, logPath + "1");
-	fs.writeFileSync(logPath, LOG, {
-		encoding: "utf8"
-	});
+	appendFileSync(logPath, getTimeString(true) + string + "\n");
 }
-
 module.exports = log;

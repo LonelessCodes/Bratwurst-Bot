@@ -1,11 +1,12 @@
 bratwursts/
 node_modules/
 charts/results/
-database/
+backups/
 .vscode/
 tmp/
 console.log
 *.log
 *.log1
 keys.json
+firebasekey.json
 bratwurst.zip
