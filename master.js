@@ -26,3 +26,12 @@ function restart() {
 }
 
 setTimeout(restart, 1000 * 60 * 60 * 2 + 1000);
+
+// create backup
+function backup () {
+	require("./modules/database").ref("/").once("value", snapshot => {
+		fs.writeFile("backups/" + (new Date().toLocaleDateString()) + ".json", JSON.stringify(snapshot.val(), null, 2), () => log("backup created"));
+	});
+}
+backup();
+setTimeout(backup, 1000 * 60 * 60 * 24);

@@ -6,12 +6,12 @@ const log = require("./../modules/log");
 
 const pyfile = path.resolve(path.join(__dirname, "\\..\\tmp\\messageBratwurst.py"));
 
-const textBratwurst = stream("#onabratwurst", function (tweetObject) {
+stream("#onabratwurst", function (tweetObject) {
 	const message = tweetObject.text.toLowerCase();
 	const tweetID = tweetObject.id_str;
 	const username = tweetObject.user.screen_name;
 
-	const badWords = message.indexOf("#heyju magst du bratwurst") > -1 || message.indexOf(" hate ") > -1 || message.indexOf(" nazi") > -1 || message.indexOf(" nazis") > -1 || message.indexOf(" fucking") > -1;
+	const badWords = message.indexOf("magst du bratwurst") > -1 || message.indexOf(" hate ") > -1 || message.indexOf(" nazi") > -1 || message.indexOf(" nazis") > -1 || message.indexOf(" fucking") > -1;
 
 	if (username === "Bratwurst_bot" || badWords) return;
 
@@ -39,20 +39,6 @@ bpy.data.objects["Text"].data.body = "${text}"`;
 				});
 			});
 	});
-});
-textBratwurst.on("disconnect", function (disconnectMessage) {
-	log(disconnectMessage);
-	textBratwurst.stop();
-	setTimeout(function () {
-		textBratwurst.start();
-	}, 10000);
-});
-textBratwurst.on("warning", function (warning) {
-	log(warning);
-	textBratwurst.stop();
-	setTimeout(function () {
-		textBratwurst.start();
-	}, 10000);
-});
+}, true);
 
 log("Bratwurst worker is listening");
