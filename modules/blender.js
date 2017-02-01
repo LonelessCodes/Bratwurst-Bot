@@ -1,7 +1,6 @@
 const {exec} = require("child_process");
-let PATH;
-
 const path = require("path");
+let PATH;
 
 const Queue = require("./queue");
 const queue = new Queue();

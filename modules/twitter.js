@@ -5,7 +5,7 @@ const {EventEmitter} = require("events");
 const Queue = require("./queue");
 const retweet_queue = new Queue();
 
-const client = new Twitter(require("./../keys.json"));
+const client = new Twitter(require("./../.keys/twitter.json"));
 
 const updateInterval = 1000 * 60 * 5;
 
@@ -71,14 +71,17 @@ module.exports.stream = function (track, callback, backup) {
 				const stat = data.data.statuses || data.statuses;
 				if (!stat) return;
 				stat.forEach(tweet => {
-					if (already_given.includes(tweet.id_str)) return;
+					if (already_given.includes(tweet.id_str) || (Date.now() - 5 * 60 * 1000) >= new Date(tweet.created_at).getTime()) {
+						already_given.push(tweet.id_str);
+						return;
+					}
 					already_given.push(tweet.id_str);
 					stream.emit("tweet", tweet);
 				});
 			}).catch(err => console.log(err));
 		};
 		run();
-		let interval = setInterval(run, updateInterval);
+		let interval = setInterval(run, updateInterval / 2);
 
 		stream.on("tweet", tweet => callback(tweet, tweet.user));
 		stream.stop = function () {
@@ -86,7 +89,8 @@ module.exports.stream = function (track, callback, backup) {
 		};
 		stream.start = function () {
 			run();
-			interval = setInterval(run, updateInterval);
+			clearInterval(interval);
+			interval = setInterval(run, updateInterval / 2);
 		};
 		return stream;
 	}

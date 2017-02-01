@@ -40,8 +40,6 @@ stream("bratwurst", (tweetObj, user) => {
 		message.indexOf("rt @") === 0 ||
 		message.indexOf("@bratwurst_bot") > -1 ||
 		badWords) return;
-	
-	// console.log(tweetObj);
 
 	database.isIgnored(user.id_str).then(() => {
 		return new Promise((resolve, reject) => {

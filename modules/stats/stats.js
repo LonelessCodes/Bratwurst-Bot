@@ -3,13 +3,13 @@ let lastMonthTime;
 let lastMonth;
 let lastYear;
 let chartDir;
-const BlenderJob = require("./../modules/blender")(),
-	log = require("./../modules/log"),
-	fs = require("fs"),
+const fs = require("fs"),
 	mkdirp = require("mkdirp"),
 	path = require("path"),
-	database = require("./../modules/database"),
-	Promise = require("promise");
+	Promise = require("promise"),
+	BlenderJob = require("./../blender")(),
+	log = require("./../log"),
+	database = require("./../database");
 
 /**
  * fixes
@@ -96,9 +96,9 @@ Number.prototype.getDaysOfMonth = function () {
  * py templates
  */
 const py = {
-	sources: fs.readFileSync(path.resolve(__dirname + "/py-template/sources.py"), "utf8"),
-	global: fs.readFileSync(path.resolve(__dirname + "/py-template/global.py"), "utf8"),
-	times: fs.readFileSync(path.resolve(__dirname + "/py-template/times.py"), "utf8")
+	sources: fs.readFileSync(path.resolve(__dirname + "/py/sources.py"), "utf8"),
+	global: fs.readFileSync(path.resolve(__dirname + "/py/global.py"), "utf8"),
+	times: fs.readFileSync(path.resolve(__dirname + "/py/times.py"), "utf8")
 };
 
 function sourceFunc(tweets) {
@@ -114,8 +114,7 @@ function sourceFunc(tweets) {
 			if (!tweet.child("source").exists()) return;
 			let s = tweet.child("source").val().split(">");
 			s = (s.length === 1 ? s[0] : s[1]).split("<")[0].replace("Twitter ", "").replace("for ", "");
-			if (!sources[s]) sources[s] = 0;
-			sources[s]++;
+			sources[s] ? sources[s]++ : sources[s] = 1;
 			numberSources++;
 		});
 
@@ -155,7 +154,7 @@ function sourceFunc(tweets) {
 				return log(err);
 			}
 
-			new BlenderJob(__dirname + "\\sources.blend")
+			new BlenderJob(path.resolve(__dirname + "/../../blends/stats_sources.blend"))
 				.python(chartDir + "/sources.py")
 				.save(chartDir + "/sources.png", err => {
 					if (err) {
@@ -219,7 +218,7 @@ function globalFunc(tweets) {
 				return log(err);
 			}
 
-			new BlenderJob(__dirname + "\\global.blend")
+			new BlenderJob(path.resolve(__dirname + "/../../blends/stats_global.blend"))
 				.python(chartDir + "/global.py")
 				.save(chartDir + "/global.png", err => {
 					if (err) {
@@ -278,11 +277,10 @@ function timesFunc(tweets) {
 			const finalMonth = [];
 			for (var i = 0; i < 12; i++) {
 				if (lastMonthTime.getMonth() === i) {
-					const month = tweets.numChildren() / days.length;
+					let month = days.length > 0 && tweets.numChildren() > 0 ? tweets.numChildren() / days.length : 0;
 					finalMonth.push(month);
-					database.ref("stats/month").child(i.toMonth()).set(month, () => {
-
-					});
+					console.log(finalMonth, i, i.toMonth(), month, days.length, tweets.numChildren());
+					database.ref("stats/month").child(i.toMonth()).set(month);
 				} else {
 					const result = stats.child(i.toMonth());
 					finalMonth.push(result.exists() ? result.val() : 0);
@@ -311,7 +309,7 @@ function timesFunc(tweets) {
 					return log(err);
 				}
 
-				new BlenderJob(path.resolve(__dirname + "/time.blend"))
+				new BlenderJob(path.resolve(__dirname + "/../../blends/stats_time.blend"))
 					.python(path.resolve(chartDir + "/times.py"))
 					.save(path.resolve(chartDir + "/times.png"), err => {
 						if (err) {
@@ -342,9 +340,8 @@ function bestUserFunc(tweets) {
 	return new Promise((resolve, reject) => {
 		const users = {};
 		tweets.forEach(tweet => {
-			if (!users[tweet.child("user/screen_name").exists()])
-				users[tweet.child("user/screen_name").val()] = 0;
-			users[tweet.child("user/screen_name").val()]++;
+			const thing = tweet.child("user/screen_name").val();
+			users[thing] ? users[thing]++ : users[thing] = 1;
 		});
 
 		const usersArray = Object.keys(users).map(key => {
@@ -372,7 +369,7 @@ function bestUserFunc(tweets) {
 				return log(err);
 			}
 
-			new BlenderJob(__dirname + "\\user.blend")
+			new BlenderJob(path.resolve(__dirname + "/../../blends/stats_user.blend"))
 				.python(chartDir + "/user.py")
 				.frame(1, 84)
 				.save(chartDir + "/user/frame.png", err => {
@@ -402,12 +399,12 @@ function getTweets(cb) {
 const pathToChart = {};
 function createStats(callback, callback2) {
 	time = new Date();
-	lastMonthTime = new Date(time.getTime() - 1000 * 3600 * 24 * time.getDaysOfLastMonth());
+	lastMonthTime = new Date(time.getTime() - 1000 * 3600 * 24 * time.getTime().getDaysOfLastMonth());
 
 	lastMonth = ((time.getMonth() - 1 == -1) ? 12 : (time.getMonth() - 1)).toMonth();
 	lastYear = ((time.getMonth() - 1 == -1) ? time.getFullYear() - 1 : time.getFullYear());
 
-	chartDir = path.join(__dirname, "results", lastYear.toString(), lastMonth.toString());
+	chartDir = path.resolve(path.join(__dirname, "/../../stats", lastYear.toString(), lastMonth.toString()));
 
 	mkdirp(chartDir, err => {
 		if (err) return log(err);
@@ -418,8 +415,8 @@ function createStats(callback, callback2) {
 				return timesFunc(tweets);
 			}).then(() => {
 				callback(pathToChart, infos);
-				return bestUserFunc(tweets);
-			}).then(callback2);
+				bestUserFunc(tweets).then(callback2).catch(console.log);
+			});
 		});
 	});
 }

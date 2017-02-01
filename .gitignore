@@ -5,8 +5,6 @@ backups/
 .vscode/
 tmp/
 console.log
-*.log
-*.log1
 keys.json
 firebasekey.json
 bratwurst.zip

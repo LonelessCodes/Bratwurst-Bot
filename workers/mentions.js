@@ -65,12 +65,12 @@ stream("@Bratwurst_bot", function (tweetObj, user) {
 	let ignored;
 	database.isIgnored(username).then(() => {
 		ignored = true;
-		ignore();
+		gotIgnored();
 	}).catch(() => {
 		ignored = true;
-		ignore();
+		gotIgnored();
 	});
-	function ignore() {
+	function gotIgnored() {
 		const returnValue = ["@" + username];
 
 		tweetObj.entities.user_mentions.forEach(user => {
@@ -90,17 +90,16 @@ stream("@Bratwurst_bot", function (tweetObj, user) {
 			if (messageHas("ignore me") === bot_name.length + 1 && !ignored) {
 
 				// Ignore user
-				database.push("ignore", username);
+				database.ref("ignored").child(user.id_str).set(username);
 				log(`@${username} ignored`);
-				returnValue.push("We're sorry it had to come this far");
+				returnValue.push("Sorry it had to come this far");
 
 			} else if (messageHas("notice me") === bot_name.length + 1 && ignored) {
 
 				// Notice user
-				if (database.del("ignore", username)) {
-					log(`@${username} noticed`);
-					returnValue.push("Yay!");
-				}
+				database.ref("ignored").child(user.id_str).set(null);
+				log(`@${username} noticed`);
+				returnValue.push("Yay!");
 
 			} else if (messageHas("help") === bot_name.length + 1) {
 
@@ -109,7 +108,7 @@ stream("@Bratwurst_bot", function (tweetObj, user) {
 				returnValue.push(`[${now() - start}ms]`);
 
 				tweet(returnValue.join(" "), {
-					media: ["imgs/help.jpg"],
+					media: ["images/help.jpg"],
 					inReplyTo: tweetID
 				}, err => {
 					if (err) return log("ERROR: ", err);
@@ -163,7 +162,7 @@ stream("@Bratwurst_bot", function (tweetObj, user) {
 				returnValue.push("Have a bite");
 				returnValue.push(`[${now() - start}ms]`);
 				tweet(returnValue.join(" "), {
-					media: ["bratwursts/" + images[index]],
+					media: ["images/bratwursts/" + images[index]],
 					inReplyTo: tweetID
 				}, err => {
 					if (err) return log("ERROR: ", err);
@@ -176,24 +175,30 @@ stream("@Bratwurst_bot", function (tweetObj, user) {
 		} else if (messageHas("@bratwurst_bot stats") > -1) {
 
 			// Stats
-			const exists = database.get("stats", username, "name");
+			database.ref("tweets").once(snap => {
+				const users = {};
+				snap.forEach(tweet => {
+					users[tweet.child("user/id").val()] ? users[tweet.child("user/id").val()]++ : users[tweet.child("user/id").val()] = 1;
+				});
 
-			const rank = [];
-			let rankAt;
-			for (let i = 0; i < database.length("stats"); i++)
-				rank.push(database.byIndex("stats", i).array.length);
-			rank.sort();
-			rank.reverse();
+				const exists = !!users[user.id_str];
 
-			if (exists) {
-				rankAt = rank.indexOf(database.byIndex("stats", exists).array.length) + 1;
-				returnValue.push("In der Uptime von v2.0+ hast du " + database.byIndex("stats", exists).array.length + " mal über Bratwurst getwittert.");
-				returnValue.push("\nDas macht dich zu Platz " + rankAt + " Weltweit");
-			} else {
-				returnValue.push("Du hast noch nie über Bratwurst geredet. Ich empfehle es zu versuchen.");
-			}
+				const rank = [];
+				let rankAt;
+				Object.keys(users).forEach(key => rank.push(users[key]));
+				rank.sort();
+				rank.reverse();
 
-			log("STATS:", returnValue.join(" "));
+				if (exists) {
+					rankAt = rank.indexOf(users[user.id_str]) + 1;
+					returnValue.push("In der Uptime von v2.0+ hast du " + users[user.id_str] + " mal über Bratwurst getwittert.");
+					returnValue.push("\nDas macht dich zu Platz " + rankAt + " Weltweit");
+				} else {
+					returnValue.push("Du hast noch nie über Bratwurst geredet. Ich empfehle es zu versuchen.");
+				}
+
+				log("STATS:", returnValue.join(" "));
+			});
 
 		} else if (messageHas("@bratwurst_bot random fact") > -1) {
 

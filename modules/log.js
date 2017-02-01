@@ -49,6 +49,7 @@ function convert(messages) {
 				break;
 			}
 		}
+		if (i < messages.length - 1) string += "; ";
 	}
 	return string;
 }

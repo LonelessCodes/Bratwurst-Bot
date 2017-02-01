@@ -1,6 +1,5 @@
 const {tweet, updateBio, client} = require("./../modules/twitter");
-const chart = require("./../charts/charts");
-const {triggerAt} = require("./../modules/utils");
+const stats = require("./../modules/stats/stats");
 const database = require("./../modules/database");
 
 /**
@@ -15,10 +14,9 @@ Array.prototype.min = function () {
 	return Math.min.apply(null, this);
 };
 
-Number.prototype.getDaysOfMonth = function () {
-	var a = new Date(this);
-	var year = a.getFullYear();
-	var month = a.getMonth();
+Date.prototype.getDaysOfMonth = function () {
+	var year = this.getFullYear();
+	var month = this.getMonth();
 	return new Date(year, month, 0).getDate();
 };
 
@@ -26,20 +24,21 @@ Number.prototype.getDaysOfMonth = function () {
  * tweet monthly stats
  */
 
-let nextMonth = new Date(new Date().getTime() + 1000 * 3600 * 24 * new Date().getTime().getDaysOfMonth());
-nextMonth.setDate(0);
-nextMonth.setHours(0);
-nextMonth.setMinutes(0);
-nextMonth.setSeconds(0);
-nextMonth.setMilliseconds(0);
-let t = nextMonth.getTime() - new Date().getTime();
-
+const nextMonth = () => {
+	const d = new Date();
+	d.setDate(1);
+	d.setHours(1);
+	d.setMinutes(0);
+	d.setSeconds(0);
+	d.setMilliseconds(0);
+	return d.getTime() + d.getDaysOfMonth() * 24 * 3600 * 1000 - Date.now();
+};
 function month() {
 	const time = new Date();
-	chart.charts(function (paths, info) {
+	stats.charts(function (paths, info) {
 		let string = "Bratwurst tweeters were most active " + (info.times > 5 ? info.times > 11 ? info.times > 14 ? info.times > 18 ? info.times > 21 ? "at night" : "in the evening" : "in the afternoon" : "around noon" : "in the morning" : "at night") + ". ";
 		string += "Most tweeters came from " + info.global;
-		string += " [" + (new Date().getTime() - time.getTime()) + "ms] #BratwurstStats";
+		string += " [" + (Date.now() - time.getTime()) + "ms] #BratwurstStats";
 
 		tweet(string, {
 			media: [
@@ -55,36 +54,25 @@ function month() {
 		tweet("Top Bratwurst tweeter of the month is @" + user + " with " + value + " tweets. Congratulations!!!", {
 			media: [path]
 		}, err => {
-			t = t + 1000 * 3600 * 24 * new Date().getTime().getDaysOfMonth();
-			setTimeout(month, t);
-			console.log(new Date(t));
+			setTimeout(month, nextMonth());
 			if (err) return log(err);
 			log("Top Bratwurst tweeter of the month is @" + user + " with " + value + " tweets. Congratulations!!!", "Top Bratwurst tweeter of the month is @" + user + " with " + value + " tweets. Congratulations!!!".length + 23 <= 140 ? "shortened" : "");
 		});
 	});
 }
-
-setTimeout(month, t);
-console.log(new Date(t), nextMonth);
-
-/**
- * Update Bio
- */
-function bio() {
-	database.ref("users").once("value", snapshot => {
-		const text = `Retweeting all things Bratwurst. ${snapshot.numChildren()} users have tweeted about bratwurst so far. "@Bratwurst_bot help" for help. Bot by @LonelessArt. v${require("./../package.json").version}`;
-
-		updateBio({ description: text }, err => {
-			if (err) log(err);
-		});
-	});
-}
-bio();
-setInterval(bio, 1000 * 60 * 30);
+setTimeout(month, nextMonth());
 
 /**
  * Daily Report
  */
+const nextDay = () => {
+	const d = new Date();
+	d.setHours(1);
+	d.setMinutes(0);
+	d.setSeconds(0);
+	d.setMilliseconds(0);
+	return d.getTime() + 24 * 3600 * 1000 - Date.now();
+};
 function dailyReport() {
 	const time = new Date();
 	
@@ -94,11 +82,13 @@ function dailyReport() {
 		const ignored = database.ref("ignored");
 
 		tweets.orderByChild("timestamp").startAt(Date.now() - 1000 * 3600 * 24).once("value", tweets => {
+			tweets = tweets.val();
+			if (!tweets) return reject();
+
 			ignored.once("value", ignored => {
 				// new tweet objects will save the User ID instead of the screen_name, to
 				// to go extra sure, but I still have to support screen_name-only entries
 				ignored = Object.keys(ignored.val()).map(key => key);
-				tweets = tweets.val();
 				tweets = Object.keys(tweets).map(key => tweets[key]);
 
 				let users = {};
@@ -145,16 +135,32 @@ function dailyReport() {
 		// tweet data
 		let string =
 			`It is once again the end of the day. Top Bratwurst Tweeter of the last 24 hours is @${name} with ${number} ${number === 1 ? "tweet" : "tweets"}. Congratulations!`;
-		string += " [" + (new Date().getTime() - time.getTime()) + "ms]";
+		string += " [" + (Date.now() - time.getTime()) + "ms]";
 
 		tweet(string, function () {
 			log(string);
-			triggerAt(new Date().setHours(0), dailyReport);
+			setTimeout(dailyReport, nextDay());
 		});
 	}).catch(() => {
 		log("Daily Report couldn't be created");
+		setTimeout(dailyReport, nextDay());
 	});
 }
-triggerAt(new Date().setHours(0), dailyReport);
+setTimeout(dailyReport, nextDay());
+
+/**
+ * Update Bio
+ */
+function bio() {
+	database.ref("users").once("value", snapshot => {
+		const text = `Retweeting all things Bratwurst. ${snapshot.numChildren()} users have tweeted about bratwurst so far. "@Bratwurst_bot help" for help. Bot by @LonelessArt. v${require("./../package.json").version}`;
+
+		updateBio({ description: text }, err => {
+			if (err) log(err);
+		});
+	});
+}
+bio();
+setInterval(bio, 1000 * 60 * 30);
 
 log("Stats worker is listening");
