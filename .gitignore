@@ -3,8 +3,7 @@ node_modules/
 charts/results/
 backups/
 .vscode/
-tmp/
+.keys/
+.tmp/
 console.log
-keys.json
-firebasekey.json
 bratwurst.zip

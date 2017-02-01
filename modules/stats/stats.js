@@ -279,7 +279,6 @@ function timesFunc(tweets) {
 				if (lastMonthTime.getMonth() === i) {
 					let month = days.length > 0 && tweets.numChildren() > 0 ? tweets.numChildren() / days.length : 0;
 					finalMonth.push(month);
-					console.log(finalMonth, i, i.toMonth(), month, days.length, tweets.numChildren());
 					database.ref("stats/month").child(i.toMonth()).set(month);
 				} else {
 					const result = stats.child(i.toMonth());

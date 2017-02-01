@@ -16,58 +16,60 @@ Array.prototype.min = function () {
 
 Date.prototype.getDaysOfMonth = function () {
 	var year = this.getFullYear();
-	var month = this.getMonth();
-	return new Date(year, month, 0).getDate();
+	var m = this.getMonth();
+	return new Date(year, m + 1, 0).getDate();
 };
 
 /*
  * tweet monthly stats
  */
 
-const nextMonth = () => {
-	const d = new Date();
-	d.setDate(1);
-	d.setHours(1);
-	d.setMinutes(0);
-	d.setSeconds(0);
-	d.setMilliseconds(0);
-	return d.getTime() + d.getDaysOfMonth() * 24 * 3600 * 1000 - Date.now();
-};
-function month() {
-	const time = new Date();
-	stats.charts(function (paths, info) {
-		let string = "Bratwurst tweeters were most active " + (info.times > 5 ? info.times > 11 ? info.times > 14 ? info.times > 18 ? info.times > 21 ? "at night" : "in the evening" : "in the afternoon" : "around noon" : "in the morning" : "at night") + ". ";
-		string += "Most tweeters came from " + info.global;
-		string += " [" + (Date.now() - time.getTime()) + "ms] #BratwurstStats";
+// const nextMonth = () => {
+// 	let d = new Date();
+// 	d.setDate(1);
+// 	d.setHours(0);
+// 	d.setMinutes(0);
+// 	d.setSeconds(0);
+// 	d.setMilliseconds(0);
+// 	d = new Date(d.getTime() + d.getDaysOfMonth() * 24 * 3600 * 1000);
+// 	console.log(d.getTime() - Date.now());
+// 	return (d.getTime() - Date.now());
+// };
+// const month = () => {
+// 	const time = new Date();
+// 	stats.charts(function (paths, info) {
+// 		let string = "Bratwurst tweeters were most active " + (info.times > 5 ? info.times > 11 ? info.times > 14 ? info.times > 18 ? info.times > 21 ? "at night" : "in the evening" : "in the afternoon" : "around noon" : "in the morning" : "at night") + ". ";
+// 		string += "Most tweeters came from " + info.global;
+// 		string += " [" + (Date.now() - time.getTime()) + "ms] #BratwurstStats";
 
-		tweet(string, {
-			media: [
-				paths.times,
-				paths.global,
-				paths.source
-			]
-		}, err => {
-			if (err) return log(err);
-			log(string, (string.length + 23 <= 140));
-		});
-	}, ({path, user, value}) => {
-		tweet("Top Bratwurst tweeter of the month is @" + user + " with " + value + " tweets. Congratulations!!!", {
-			media: [path]
-		}, err => {
-			setTimeout(month, nextMonth());
-			if (err) return log(err);
-			log("Top Bratwurst tweeter of the month is @" + user + " with " + value + " tweets. Congratulations!!!", "Top Bratwurst tweeter of the month is @" + user + " with " + value + " tweets. Congratulations!!!".length + 23 <= 140 ? "shortened" : "");
-		});
-	});
-}
-setTimeout(month, nextMonth());
+// 		tweet(string, {
+// 			media: [
+// 				paths.times,
+// 				paths.global,
+// 				paths.source
+// 			]
+// 		}, err => {
+// 			if (err) return log(err);
+// 			log(string, (string.length + 23 <= 140));
+// 		});
+// 	}, ({path, user, value}) => {
+// 		tweet("Top Bratwurst tweeter of the month is @" + user + " with " + value + " tweets. Congratulations!!!", {
+// 			media: [path]
+// 		}, err => {
+// 			setTimeout(() => month(), nextMonth());
+// 			if (err) return log(err);
+// 			log("Top Bratwurst tweeter of the month is @" + user + " with " + value + " tweets. Congratulations!!!", "Top Bratwurst tweeter of the month is @" + user + " with " + value + " tweets. Congratulations!!!".length + 23 <= 140 ? "shortened" : "");
+// 		});
+// 	});
+// }
+// setTimeout(() => month(), nextMonth());
 
 /**
  * Daily Report
  */
 const nextDay = () => {
 	const d = new Date();
-	d.setHours(1);
+	d.setHours(0);
 	d.setMinutes(0);
 	d.setSeconds(0);
 	d.setMilliseconds(0);
@@ -75,7 +77,7 @@ const nextDay = () => {
 };
 function dailyReport() {
 	const time = new Date();
-	
+
 	new Promise((resolve, reject) => {
 		// fetch data
 		const tweets = database.ref("tweets");

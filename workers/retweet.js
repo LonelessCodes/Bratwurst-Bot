@@ -1,6 +1,7 @@
 const {retweet, stream, onfollowed, tweet} = require("./../modules/twitter");
 const database = require("./../modules/database");
 const log = require("./../modules/log");
+const {compare} = require("./../modules/utils");
 
 Array.prototype.max = function () {
 	return Math.max.apply(null, this);
@@ -19,12 +20,11 @@ const tweets = database.ref("tweets");
 
 // Retweet
 
-/**
- * Built-in spam filter for 3.3 release
- */
+const timeouts = {};
 
 let lastTweet;
 stream("bratwurst", (tweetObj, user) => {
+	if (user.screen_name === "Bratwurst_bot") return;
 	const message = tweetObj.text.toLowerCase();
 	const tweetID = tweetObj.id_str;
 
@@ -40,6 +40,25 @@ stream("bratwurst", (tweetObj, user) => {
 		message.indexOf("rt @") === 0 ||
 		message.indexOf("@bratwurst_bot") > -1 ||
 		badWords) return;
+	
+	// check for similar tweets in the last time to prevent spamming
+	let compareString = message;
+	tweetObj.entities.urls.forEach(url => compareString = compareString.replace(url, ""));
+	tweetObj.entities.hashtags.forEach(url => compareString = compareString.replace(url, ""));
+	tweetObj.entities.user_mentions.forEach(url => compareString = compareString.replace(url, ""));
+	compareString = compareString.replace(/ /g, "");
+
+	let send = true;
+	Object.keys(timeouts).forEach(key => {
+		if (compare(key, compareString) > 0.9)
+			send = false;
+	});
+	if (!send) return;
+
+	clearTimeout(timeouts[compareString]);
+	timeouts[compareString] = setTimeout(() => {
+		delete timeouts[compareString];
+	}, 1000 * 3600 * 2);
 
 	database.isIgnored(user.id_str).then(() => {
 		return new Promise((resolve, reject) => {

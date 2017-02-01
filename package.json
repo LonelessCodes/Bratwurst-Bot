@@ -1,6 +1,6 @@
 {
   "name": "bratwurstbot",
-  "version": "3.2.1",
+  "version": "3.2.2b",
   "description": "A bot that retweets all things bratwurst",
   "main": "master.js",
   "dependencies": {
@@ -11,18 +11,7 @@
     "tree-kill": "^1.1.0",
     "twit": "^2.2.5"
   },
-  "devDependencies": {
-    "gulp": "^3.9.1",
-    "gulp-concat": "^2.6.1",
-    "gulp-debug": "^3.0.0",
-    "gulp-deporder": "^1.1.0",
-    "gulp-imagemin": "^3.1.1",
-    "gulp-load-plugins": "^1.4.0",
-    "gulp-modify-file": "^0.1.0",
-    "gulp-rename": "^1.2.2",
-    "gulp-sourcemaps": "^2.4.0",
-    "gulp-strip-debug": "^1.1.0"
-  },
+  "devDependencies": {},
   "scripts": {
     "test": "node test.js",
     "start": "node master.js"
