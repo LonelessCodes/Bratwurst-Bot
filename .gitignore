@@ -3,7 +3,7 @@ node_modules/
 charts/results/
 backups/
 .vscode/
-.keys/
+keys/
 .tmp/
 console.log
 bratwurst.zip

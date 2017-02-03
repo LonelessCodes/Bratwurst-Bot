@@ -1,6 +1,6 @@
 const Promise = require("promise");
 const firebase = require("firebase-admin");
-const key = require("./../.keys/firebase.json");
+const key = require("./../keys/firebase.json");
 
 firebase.initializeApp({
 	credential: firebase.credential.cert(key),
