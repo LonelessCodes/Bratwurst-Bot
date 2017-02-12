@@ -1,6 +1,7 @@
 const {tweet, updateBio, client} = require("./../modules/twitter");
 const stats = require("./../modules/stats/stats");
 const database = require("./../modules/database");
+const utils = require("./../modules/utils");
 
 /**
  * Logger => in case of crashing device you always got a log file to show you what went wrong
@@ -68,34 +69,39 @@ Date.prototype.getDaysOfMonth = function () {
  * Daily Report
  */
 const nextDay = () => {
-	const d = new Date();
-	d.setHours(0);
-	d.setMinutes(0);
-	d.setSeconds(0);
-	d.setMilliseconds(0);
-	return d.getTime() + 24 * 3600 * 1000 - Date.now();
+	//                       10 Minutes
+	const interval = 1000 * 3600 * 24;
+	const d = Date.now();
+	const t = Math.ceil(d / interval);
+	return t * interval - d;
 };
 function dailyReport() {
 	const time = new Date();
 
 	new Promise((resolve, reject) => {
 		// fetch data
-		const tweets = database.ref("tweets");
-		const ignored = database.ref("ignored");
+		
+		database.ref("tweets").orderByChild("timestamp").startAt(Date.now() - 1000 * 3600 * 24).once("value", tweetsSnap => {
+			if (!tweetsSnap.exists()) return reject();
+			tweetsSnap = tweetsSnap.val();
 
-		tweets.orderByChild("timestamp").startAt(Date.now() - 1000 * 3600 * 24).once("value", tweets => {
-			tweets = tweets.val();
-			if (!tweets) return reject();
-
-			ignored.once("value", ignored => {
+			database.ref("ignored").once("value", ignoredSnap => {
 				// new tweet objects will save the User ID instead of the screen_name, to
 				// to go extra sure, but I still have to support screen_name-only entries
-				ignored = Object.keys(ignored.val()).map(key => key);
-				tweets = Object.keys(tweets).map(key => tweets[key]);
+				ignoredSnap = ignoredSnap.val();
+				const ignored = [];
+				Object.keys(ignoredSnap).forEach(key => {
+					ignored.push(key);
+				});
+				const tweets = [];
+				Object.keys(tweetsSnap).forEach(key => {
+					const snap = tweetsSnap[key];
+					tweets.push(snap);
+				});
 
 				let users = {};
 				tweets.filter(tweet => {
-					if (!ignored.id.includes(tweet.user.id) || !ignored.name.includes(tweet.user.screen_name))
+					if (!ignored.includes(tweet.user.id))
 						return true;
 					return false;
 				}).forEach(tweet => {
@@ -137,7 +143,7 @@ function dailyReport() {
 		// tweet data
 		let string =
 			`It is once again the end of the day. Top Bratwurst Tweeter of the last 24 hours is @${name} with ${number} ${number === 1 ? "tweet" : "tweets"}. Congratulations!`;
-		string += " [" + (Date.now() - time.getTime()) + "ms]";
+		string += " [" + utils.time(time.getTime(), Date.now()) + "]";
 
 		tweet(string, function () {
 			log(string);

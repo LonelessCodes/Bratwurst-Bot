@@ -1,11 +1,11 @@
 {
   "name": "bratwurstbot",
-  "version": "3.2.2b",
+  "version": "3.2.3",
   "description": "A bot that retweets all things bratwurst",
   "main": "master.js",
   "dependencies": {
     "colors": "^1.1.2",
-    "firebase-admin": "^4.0.4",
+    "firebase-admin": "^4.1.0",
     "mkdirp": "^0.5.1",
     "promise": "^7.1.1",
     "tree-kill": "^1.1.0",

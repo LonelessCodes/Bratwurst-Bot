@@ -3,6 +3,8 @@ const now = time => {
 	else return new Date().getTime();
 };
 
+const {cleanText} = require("./../modules/utils");
+
 class User {
 	constructor(user) {
 		this.screen_name = user.screen_name;
@@ -16,8 +18,13 @@ class Tweet {
 		this.place = tweetObj.place ? tweetObj.place.country_code : null;
 		this.offset = tweetObj.user.utc_offset || 0;
 		this.lang = tweetObj.lang || null;
-		this.hashtags = tweetObj.entities.hashtags ? tweetObj.entities.hashtags.map(hash => hash.text) : null;
+		this.hashtags = tweetObj.entities.hashtags[0] ? tweetObj.entities.hashtags.map(hash => hash.text) : null;
 		this.timestamp = now(tweetObj.created_at) + (7200 * 1000);
+
+		// remove urls and hashtags from tweet
+		let str = cleanText(tweetObj);
+		
+		this.text = str;
 
 		this.user = {
 			id: tweetObj.user.id_str,

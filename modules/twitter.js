@@ -7,8 +7,6 @@ const retweet_queue = new Queue();
 
 const client = new Twitter(require("./../keys/twitter.json"));
 
-const updateInterval = 1000 * 60 * 5;
-
 module.exports.tweet = function (status, options, callback) {
 	const params = {
 		status: status
@@ -66,7 +64,7 @@ module.exports.stream = function (track, callback, backup) {
 				q: track,
 				result_type: "recent",
 				include_entities: "true",
-				count: 20
+				count: Math.floor(backup / 60 * 5)
 			}).then(data => {
 				const stat = data.data.statuses || data.statuses;
 				if (!stat) return;
@@ -81,7 +79,7 @@ module.exports.stream = function (track, callback, backup) {
 			}).catch(err => console.log(err));
 		};
 		run();
-		let interval = setInterval(run, updateInterval / 2);
+		let interval = setInterval(run, backup * 1000);
 
 		stream.on("tweet", tweet => callback(tweet, tweet.user));
 		stream.stop = function () {
@@ -90,7 +88,7 @@ module.exports.stream = function (track, callback, backup) {
 		stream.start = function () {
 			run();
 			clearInterval(interval);
-			interval = setInterval(run, updateInterval / 2);
+			interval = setInterval(run, backup * 1000);
 		};
 		return stream;
 	}
@@ -107,3 +105,5 @@ module.exports.updateBio = function (params, callback) {
 };
 
 module.exports.client = client;
+
+module.exports.botName = "Bratwurst_bot";

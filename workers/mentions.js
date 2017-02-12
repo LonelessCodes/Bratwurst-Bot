@@ -1,11 +1,12 @@
-const {stream, tweet} = require("./../modules/twitter");
+const {tweet, client, botName, stream: _stream} = require("./../modules/twitter");
 const database = require("./../modules/database");
+const utils = require("./../modules/utils");
 const log = require("./../modules/log");
 const fs = require("fs");
 
 const now = time => {
 	if (time) return new Date(time).getTime();
-	else return new Date().getTime();
+	else return Date.now();
 };
 
 Array.prototype.max = function () {
@@ -15,9 +16,10 @@ Array.prototype.min = function () {
 	return Math.min.apply(null, this);
 };
 
-/*
- * mention
- */
+// function quote(str) {
+// 	return str.replace(/(?=[\/\\^$*+?.()|{}[\]])/g, "\\");
+// }
+// const regex = query => new RegExp(query);
 
 const reply = {
 	replies: {
@@ -38,7 +40,8 @@ const reply = {
 			"Bratwürste gibt es in roher und gebrühter Form, wobei die gebrühte Form verbreiteter ist."
 		],
 		follow: [
-			"Thanks for the follow! Following gives you special Bratwurst priorities. \"@Bratwurst_bot help\" for more bot information."
+			// "Thanks for the follow! Following gives you special Bratwurst priorities. \"@" + botName + " help\" for more bot information.",
+			"Thanks for the follow, {{name}}! \"@" + botName + " help\" for more bot information."
 		]
 	},
 	get(type) {
@@ -46,66 +49,113 @@ const reply = {
 	}
 };
 
-/**
- * Listen for conversations
+const stream = client.stream("user");
+
+/*
+ * Follows
  */
-stream("@Bratwurst_bot", function (tweetObj, user) {
+stream.on("follow", function (event) {
+	const name = event.source.name;
+	const screenName = event.source.screen_name;
+
+	if (screenName !== botName) {
+		const status = "@" + screenName + " " + reply.get("follow").replace("{{name}}", name);
+		tweet(status, err => {
+			if (err) return log(err);
+		});
+		log("@" + screenName + " followed");
+	}
+});
+
+/*
+ * mention
+ */
+_stream("@" + botName, function (tweetObj) {
+	const user = tweetObj.user;
+
+	// is in reply to Bratwurstbot?
+	const mentions = tweetObj.entities.user_mentions;
+	let mentioned = false;
+	for (let i = 0; i < mentions.length; i++) {
+		if (mentions[i].screen_name == botName) {
+			mentioned = true;
+			break;
+		}
+	}
+	if (!mentioned) return;
+
 	const start = now(); // set timestamp of the request
 	const message = tweetObj.text.toLowerCase();
-	const messageHas = query => {
-		return message.indexOf(query);
-	};
+	const messageHas = query => message.indexOf(query);
 	const username = user.screen_name;
 
 	// before going any further, check if this is not an echo or a retweet
-	if (username === "Bratwurst_bot" || messageHas("rt @") === 0) return;
+	if (username === botName || /^rt/.test(message)) return;
 
 	// now continue setting consts
 	const tweetID = tweetObj.id_str;
 	let ignored;
-	database.isIgnored(username).then(() => {
-		ignored = true;
-		gotIgnored();
-	}).catch(() => {
-		ignored = true;
+	database.isIgnored(username, _ignored => {
+		if (_ignored) {
+			ignored = true;
+			console.log("ignored")
+		} else {
+			ignored = false;
+			console.log("noticed")
+		}
 		gotIgnored();
 	});
 	function gotIgnored() {
 		const returnValue = ["@" + username];
 
 		tweetObj.entities.user_mentions.forEach(user => {
-			if (user.screen_name !== "Bratwurst_bot")
+			if (user.screen_name !== botName)
 				returnValue.push("@" + user.screen_name);
 		});
 
 		const baseValue = returnValue.join(" ");
+
+		const send = () => {
+			returnValue.push(`[${utils.time(start, now())}]`);
+			tweet(returnValue.join(" "), {
+				inReplyTo: tweetID
+			}, err => {
+				if (err) return log("ERROR: ", err);
+			});
+		};
 
 		log(`MENTION: "${tweetObj.text}" by ${username}`);
 
 		/**
 		 * If first mention is bratwurst bot
 		 */
-		const bot_name = "@bratwurst_bot";
+		const bot_name = "@" + botName.toLowerCase();
 		if (messageHas(bot_name) === 0) {
-			if (messageHas("ignore me") === bot_name.length + 1 && !ignored) {
+			const processed = message.replace(/@Bratwurst_Bot\s+/g, "");
+			const has = (query, i) => {
+				if (i !== void 0) return processed.indexOf(query) === i;
+				return processed.indexOf(query) > -1;
+			};
+
+			if (has("ignore me", 0) && !ignored) {
 
 				// Ignore user
 				database.ref("ignored").child(user.id_str).set(username);
 				log(`@${username} ignored`);
 				returnValue.push("Sorry it had to come this far");
 
-			} else if (messageHas("notice me") === bot_name.length + 1 && ignored) {
+			} else if (has("notice me", 0) && ignored) {
 
 				// Notice user
 				database.ref("ignored").child(user.id_str).set(null);
 				log(`@${username} noticed`);
 				returnValue.push("Yay!");
 
-			} else if (messageHas("help") === bot_name.length + 1) {
+			} else if (has("help", 0)) {
 
 				// Return Help
 				returnValue.push("There you go");
-				returnValue.push(`[${now() - start}ms]`);
+				returnValue.push(`[${utils.time(start, now())}]`);
 
 				tweet(returnValue.join(" "), {
 					media: ["images/help.jpg"],
@@ -117,27 +167,27 @@ stream("@Bratwurst_bot", function (tweetObj, user) {
 				});
 				return; // sending the tweet link it is => prevent script from sending twice
 
-			} else if (messageHas("?") > -1) {
+			} else if (has("?")) {
 
 				/**
 				 * Questions
 				 */
-				if (messageHas("wurde die") > -1 && messageHas("erfunden") > -1) {
+				if (has("wurde die") && has("erfunden")) {
 
 					// Wann wurde die Bratwurst erfunden
 					returnValue.push(reply.get("invented"));
 
-				} else if (messageHas("wieso") > -1 && messageHas("heißt") > -1 && messageHas("bratwurst") > -1) {
+				} else if (has("wieso") && has("heißt") && has("bratwurst")) {
 
 					// Wieso heißt die Bratwurst Bratwurst
 					returnValue.push(reply.get("whyIsCalled"));
 
-				} else if (messageHas("senf oder") > -1 && messageHas("ketchup") > -1) {
+				} else if (has("senf oder") && has("ketchup")) {
 
 					// Senf oder Ketchup
 					returnValue.push("Senf!");
 
-				} else if (messageHas("wie") > -1 && (messageHas("braten") > -1 || messageHas("brät") > -1 || messageHas("gebraten") > -1 || messageHas("zubereiten") > -1) && messageHas("bratwurst") > -1) {
+				} else if (has("wie") && (has("braten") || has("brät") || has("gebraten") || has("zubereiten")) && has("bratwurst")) {
 
 					// Wie wird eine bratwurst gebraten
 					returnValue.push("Mancher hat Angst vor geplatzter Wurst. Immer vorsichtig ganz kleine Rillen einkerben.");
@@ -145,7 +195,8 @@ stream("@Bratwurst_bot", function (tweetObj, user) {
 				} else {
 
 					// Default
-					returnValue.push("Auch meine Weisheit muss irgendwo ein Ende haben.");
+					// returnValue.push("Auch meine Weisheit muss irgendwo ein Ende haben.");
+					return;
 
 				}
 
@@ -153,14 +204,14 @@ stream("@Bratwurst_bot", function (tweetObj, user) {
 			}
 		}
 
-		if (messageHas("@bratwurst_bot random image") > -1) {
+		if (messageHas(bot_name + " random image") > -1) {
 
 			// Random Image
-			fs.readDir("bratwursts", (err, images) => {
+			fs.readdir("images/bratwursts", (err, images) => {
 				const index = Math.floor(Math.random() * images.length);
 
 				returnValue.push("Have a bite");
-				returnValue.push(`[${now() - start}ms]`);
+				returnValue.push(`[${utils.time(start, now())}]`);
 				tweet(returnValue.join(" "), {
 					media: ["images/bratwursts/" + images[index]],
 					inReplyTo: tweetID
@@ -172,13 +223,14 @@ stream("@Bratwurst_bot", function (tweetObj, user) {
 			});
 			return; // sending the tweet link it is => prevent script from sending twice
 
-		} else if (messageHas("@bratwurst_bot stats") > -1) {
+		} else if (messageHas(bot_name + " stats") > -1) {
 
 			// Stats
-			database.ref("tweets").once(snap => {
+			database.ref("tweets").once("value", snap => {
 				const users = {};
 				snap.forEach(tweet => {
-					users[tweet.child("user/id").val()] ? users[tweet.child("user/id").val()]++ : users[tweet.child("user/id").val()] = 1;
+					const id = tweet.child("user/id").val();
+					users[id] ? users[id]++ : users[id] = 1;
 				});
 
 				const exists = !!users[user.id_str];
@@ -197,10 +249,14 @@ stream("@Bratwurst_bot", function (tweetObj, user) {
 					returnValue.push("Du hast noch nie über Bratwurst geredet. Ich empfehle es zu versuchen.");
 				}
 
+				// tweet
+				send();
+
 				log("STATS:", returnValue.join(" "));
 			});
+			return;
 
-		} else if (messageHas("@bratwurst_bot random fact") > -1) {
+		} else if (messageHas(bot_name + " random fact") > -1) {
 
 			// Random fact
 			returnValue.push(reply.get("random"));
@@ -210,14 +266,21 @@ stream("@Bratwurst_bot", function (tweetObj, user) {
 
 		// Send Tweet
 		if (returnValue.join(" ") !== baseValue) {
-			returnValue.push(`[${now() - start}ms]`);
-			tweet(returnValue.join(" "), {
-				inReplyTo: tweetID
-			}, err => {
-				if (err) return log("ERROR: ", err);
-			});
+			send();
 		}
 	}
+});
+
+// catch stream errors
+stream.on("warning", function (warning) {
+	log(warning);
+	stream.stop();
+	setTimeout(() => stream.start(), 10000);
+});
+stream.on("disconnect", function (disconnectMessage) {
+	log(disconnectMessage);
+	stream.stop();
+	setTimeout(() => stream.start(), 10000);
 });
 
 log("Mentions worker is listening");

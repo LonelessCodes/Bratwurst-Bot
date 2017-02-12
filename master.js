@@ -24,14 +24,17 @@ function restart() {
 	processes = [];
 	createWorker();
 }
-setTimeout(restart, 1000 * 3600 * 4 + 1000);
+setInterval(restart, 1000 * 3600 * 6);
 
 // create backup
-function backup () {
+function backup() {
 	require("./modules/database").ref("/").once("value", snapshot => {
 		if (!snapshot.exists()) return;
-		fs.writeFile(require("path").join(__dirname, "backups/" + (new Date().toLocaleDateString()) + ".json"), JSON.stringify(snapshot.val(), null, 2), () => log("backup created"));
+		const time = new Date();
+		const name = `${time.getFullYear()}-${time.getMonth() + 1}-${time.getDate()}`;
+		console.log(require("path").join(__dirname, "backups", name + ".json"));
+		fs.writeFile(require("path").join(__dirname, "backups", name + ".json"), JSON.stringify(snapshot.val(), null, 2), () => log("backup created"));
 	});
+	setTimeout(backup, 1000 * 3600 * 24);
 }
 backup();
-setTimeout(backup, 1000 * 3600 * 24);

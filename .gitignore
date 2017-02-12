@@ -4,6 +4,5 @@ charts/results/
 backups/
 .vscode/
 keys/
-.tmp/
+tmp/
 console.log
-bratwurst.zip
