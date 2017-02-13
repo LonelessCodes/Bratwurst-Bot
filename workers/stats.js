@@ -161,7 +161,7 @@ setTimeout(dailyReport, nextDay());
  */
 function bio() {
 	database.ref("users").once("value", snapshot => {
-		const text = `Retweeting all things Bratwurst. ${snapshot.numChildren()} users have tweeted about bratwurst so far. "@Bratwurst_bot help" for help. Bot by @LonelessArt. v${require("./../package.json").version}`;
+		const text = `About all things Bratwurst. ${snapshot.numChildren()} users have tweeted about bratwurst. "@Bratwurst_bot help" for help. Bot by @LonelessArt. v${require("./../package.json").version}`;
 
 		updateBio({ description: text }, err => {
 			if (err) log(err);

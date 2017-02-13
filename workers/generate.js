@@ -1,6 +1,7 @@
 const {tweet} = require("./../modules/twitter");
 const database = require("./../modules/database");
-const Markov = require("./../lib/markov.js");
+const MarkovChar = require("./../lib/markov.js");
+const MarkovWord = require("./../lib/markov-word.js");
 
 /**
  * Logger => in case of crashing device you always got a log file to show you what went wrong
@@ -9,9 +10,15 @@ const log = require("./../modules/log");
 
 const hashtag = " #bot";
 
-const markov = {};
-markov["en"] = new Markov(6, 140 - hashtag.length);
-markov["de"] = new Markov(6, 140 - hashtag.length);
+// character level Markov chain
+const markovChar = {};
+markovChar["en"] = new MarkovChar(6, 140 - hashtag.length);
+markovChar["de"] = new MarkovChar(6, 140 - hashtag.length);
+
+// word level markov chain
+const markovWord = {};
+markovWord["en"] = new MarkovWord(2, 140 - hashtag.length);
+markovWord["de"] = new MarkovWord(2, 140 - hashtag.length);
 
 const tweets = database.ref("tweets");
 tweets.once("value", snap => {
@@ -28,24 +35,33 @@ function add(tweet) {
 
 	const lang = tweet.child("lang").val();
 	if (lang === "en" || lang === "de") {
-		markov[lang].feed(text);
+		markovChar[lang].feed(text);
+		markovWord[lang].feed(text);
 	}
 }
 
 function tweeter() {
-	const total = markov["en"].count() + markov["de"].count();
-	const result = Math.random() * total <= markov["de"].count() ?
-		markov["de"].generate() : markov["en"].generate();
+	const random = Math.floor(Math.random() * 2);
+	const total = markovWord["en"].count() + markovWord["de"].count();
+	
+	let result;
+	if (random) {
+		result = Math.random() * total <= markovWord["de"].count() ?
+			markovWord["de"].generate() : markovWord["en"].generate();
+	} else {
+		result = Math.random() * total <= markovChar["de"].count() ?
+			markovChar["de"].generate() : markovChar["en"].generate();
+	}
 
-	if (result.length >= 10) {
-		log("Random sentence: " + result);
+	if (result.length >= 15) {
+		log("Random sentence: " + result, random ? "Markov Word" : "Markov Character");
 		tweet(result + hashtag, () => tweetAt());
 	} else {
 		tweeter();
 	}
 }
 function tweetAt() {
-	//                       10 Minutes
+	//                       30 Minutes
 	const interval = 60000 * 30;
 	const d = Date.now();
 	const t = Math.ceil(d / interval);
