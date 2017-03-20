@@ -1,6 +1,11 @@
 const child_process = require("child_process");
 const fs = require("fs");
 const log = require("./modules/log");
+const mkdir = require("mkdirp");
+
+// prepare
+if (!fs.existsSync("backups/")) mkdir.sync("backups");
+if (!fs.existsSync("stats/")) mkdir.sync("stats");
 
 let processes = [];
 

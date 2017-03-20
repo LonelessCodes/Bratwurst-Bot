@@ -2,6 +2,7 @@ const {tweet, updateBio, client} = require("./../modules/twitter");
 const stats = require("./../modules/stats/stats");
 const database = require("./../modules/database");
 const utils = require("./../modules/utils");
+const cron = require("cron");
 
 /**
  * Logger => in case of crashing device you always got a log file to show you what went wrong
@@ -25,56 +26,39 @@ Date.prototype.getDaysOfMonth = function () {
  * tweet monthly stats
  */
 
-// const nextMonth = () => {
-// 	let d = new Date();
-// 	d.setDate(1);
-// 	d.setHours(0);
-// 	d.setMinutes(0);
-// 	d.setSeconds(0);
-// 	d.setMilliseconds(0);
-// 	d = new Date(d.getTime() + d.getDaysOfMonth() * 24 * 3600 * 1000);
-// 	console.log(d.getTime() - Date.now());
-// 	return (d.getTime() - Date.now());
-// };
-// const month = () => {
-// 	const time = new Date();
-// 	stats.charts(function (paths, info) {
-// 		let string = "Bratwurst tweeters were most active " + (info.times > 5 ? info.times > 11 ? info.times > 14 ? info.times > 18 ? info.times > 21 ? "at night" : "in the evening" : "in the afternoon" : "around noon" : "in the morning" : "at night") + ". ";
-// 		string += "Most tweeters came from " + info.global;
-// 		string += " [" + (Date.now() - time.getTime()) + "ms] #BratwurstStats";
+const month = () => {
+	const time = new Date();
+	stats.charts(function (paths, info) {
+		let string = "Bratwurst tweeters were most active " + (info.times > 5 ? info.times > 11 ? info.times > 14 ? info.times > 18 ? info.times > 21 ? "at night" : "in the evening" : "in the afternoon" : "around noon" : "in the morning" : "at night") + ". ";
+		string += "Most tweeters came from " + info.global;
+		string += " [" + (Date.now() - time.getTime()) + "ms] #BratwurstStats";
 
-// 		tweet(string, {
-// 			media: [
-// 				paths.times,
-// 				paths.global,
-// 				paths.source
-// 			]
-// 		}, err => {
-// 			if (err) return log(err);
-// 			log(string, (string.length + 23 <= 140));
-// 		});
-// 	}, ({path, user, value}) => {
-// 		tweet("Top Bratwurst tweeter of the month is @" + user + " with " + value + " tweets. Congratulations!!!", {
-// 			media: [path]
-// 		}, err => {
-// 			setTimeout(() => month(), nextMonth());
-// 			if (err) return log(err);
-// 			log("Top Bratwurst tweeter of the month is @" + user + " with " + value + " tweets. Congratulations!!!", "Top Bratwurst tweeter of the month is @" + user + " with " + value + " tweets. Congratulations!!!".length + 23 <= 140 ? "shortened" : "");
-// 		});
-// 	});
-// }
-// setTimeout(() => month(), nextMonth());
+		tweet(string, {
+			media: [
+				paths.times,
+				paths.global,
+				paths.source
+			]
+		}, err => {
+			if (err) return log(err);
+			log(string, (string.length + 23 <= 140));
+		});
+	}, ({ path, user, value }) => {
+		tweet("Top Bratwurst tweeter of the month is @" + user + " with " + value + " tweets. Congratulations!!!", {
+			media: [path]
+		}, err => {
+			if (err) return log(err);
+			log("Top Bratwurst tweeter of the month is @" + user + " with " + value + " tweets. Congratulations!!!", "Top Bratwurst tweeter of the month is @" + user + " with " + value + " tweets. Congratulations!!!".length + 23 <= 140 ? "shortened" : "");
+		});
+	});
+};
+// cron new JOB
+new cron.CronJob("00 00 00 01 * *", month, null, true, "Europe/Berlin");
 
 /**
  * Daily Report
  */
-const nextDay = () => {
-	//                       10 Minutes
-	const interval = 1000 * 3600 * 24;
-	const d = Date.now();
-	const t = Math.ceil(d / interval);
-	return t * interval - d;
-};
+
 function dailyReport() {
 	const time = new Date();
 
@@ -142,19 +126,18 @@ function dailyReport() {
 	}).then(({name, number}) => {
 		// tweet data
 		let string =
-			`It is once again the end of the day. Top Bratwurst Tweeter of the last 24 hours is @${name} with ${number} ${number === 1 ? "tweet" : "tweets"}. Congratulations!`;
+			`It is once again the end of the day. Top Bratwurst Tweeter of the last 24 hours is @${name} with ${number} ${number === 1 ? "tweet" : "tweets"} 🎉🎆. Congratulations!`;
 		string += " [" + utils.time(time.getTime(), Date.now()) + "]";
 
 		tweet(string, function () {
 			log(string);
-			setTimeout(dailyReport, nextDay());
 		});
 	}).catch(() => {
 		log("Daily Report couldn't be created");
-		setTimeout(dailyReport, nextDay());
 	});
 }
-setTimeout(dailyReport, nextDay());
+// cron new JOB
+new cron.CronJob("00 00 00 * * *", dailyReport, null, true, "Europe/Berlin");
 
 /**
  * Update Bio

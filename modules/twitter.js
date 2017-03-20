@@ -11,22 +11,31 @@ module.exports.tweet = function (status, options, callback) {
 	const params = {
 		status: status
 	};
-	
+
 	if (arguments.length === 3) {
 		if (options.inReplyTo) params.in_reply_to_status_id = options.inReplyTo;
 		if (options.media) {
 			params.media_ids = [];
 
 			roll(options.media, (mediaPath, index, next) => {
-				fs.readFile(mediaPath, { encoding: "base64" }, (err, media) => {
-					if (err) return callback(err);
-					client.post("media/upload", { media_data: media }, (err, data) => {
+				if (typeof mediaPath === "string") {
+					fs.readFile(mediaPath, { encoding: "base64" }, (err, media) => {
+						if (err) return callback(err);
+						client.post("media/upload", { media_data: media }, (err, data) => {
+							if (err) return callback(err);
+
+							params.media_ids.push(data.media_id_string);
+							next();
+						});
+					});
+				} else if (mediaPath instanceof Buffer) {
+					client.post("media/upload", { media_data: mediaPath.toString("base64") }, (err, data) => {
 						if (err) return callback(err);
 
 						params.media_ids.push(data.media_id_string);
 						next();
 					});
-				});
+				}
 			}, () => {
 				client.post("statuses/update", params, callback);
 			});
@@ -57,7 +66,7 @@ module.exports.stream = function (track, callback, backup) {
 		return stream;
 	} else {
 		const stream = new EventEmitter();
-		
+
 		const already_given = [];
 		const run = () => {
 			client.get("search/tweets", {

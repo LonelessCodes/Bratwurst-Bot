@@ -2,6 +2,7 @@ const {tweet} = require("./../modules/twitter");
 const database = require("./../modules/database");
 const MarkovChar = require("./../lib/markov.js");
 const MarkovWord = require("./../lib/markov-word.js");
+const cron = require("cron");
 
 /**
  * Logger => in case of crashing device you always got a log file to show you what went wrong
@@ -12,13 +13,13 @@ const hashtag = " #bot";
 
 // character level Markov chain
 const markovChar = {};
-markovChar["en"] = new MarkovChar(6, 140 - hashtag.length);
-markovChar["de"] = new MarkovChar(6, 140 - hashtag.length);
+markovChar["en"] = new MarkovChar(6, 140 - hashtag.length - 1);
+markovChar["de"] = new MarkovChar(6, 140 - hashtag.length - 1);
 
 // word level markov chain
 const markovWord = {};
-markovWord["en"] = new MarkovWord(2, 140 - hashtag.length);
-markovWord["de"] = new MarkovWord(2, 140 - hashtag.length);
+markovWord["en"] = new MarkovWord(2, 140 - hashtag.length - 1);
+markovWord["de"] = new MarkovWord(2, 140 - hashtag.length - 1);
 
 const tweets = database.ref("tweets");
 tweets.once("value", snap => {
@@ -53,7 +54,7 @@ function tweeter() {
 			markovChar["de"].generate() : markovChar["en"].generate();
 	}
 
-	if (result.length >= 15) {
+	if (result.length >= 15 && new RegExp("bratwurst", "gi").test(result)) {
 		log("Random sentence: " + result, random ? "Markov Word" : "Markov Character");
 		tweet(result + hashtag, () => tweetAt());
 	} else {
@@ -62,10 +63,11 @@ function tweeter() {
 }
 function tweetAt() {
 	//                       30 Minutes
-	const interval = 60000 * 30;
-	const d = Date.now();
-	const t = Math.ceil(d / interval);
-	setTimeout(tweeter, t * interval - d);
+	// const interval = 60000 * 30;
+	// const d = Date.now();
+	// const t = Math.ceil(d / interval);
+	// setTimeout(tweeter, t * interval - d);
+	new cron.CronJob("00 */30 * * * 1-5", tweeter, null, true, "Europe/Berlin");
 }
 
 log("Markov Chain worker is listening");

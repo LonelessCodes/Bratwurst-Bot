@@ -1,44 +1,21 @@
-// const {tweet} = require("./../modules/twitter");
-const database = require("./modules/database");
-const Markov = require("./lib/markov-word.js");
+const fs = require("fs");
+const Canvas = require("./lib/pureimage");
 
-/**
- * Logger => in case of crashing device you always got a log file to show you what went wrong
- */
+const img = new Canvas(500, 500, { fill: "white" });
+const ctx = img.getContext("2d");
 
-const hashtag = " #bot";
+const grey = "#4D4D4D";
+const orange = "#FFC04D";
+const orange2 = "#F2A74C";
+const green = "#78C07D";
+const white = "#FFFFFF";
 
-const markov = {};
-markov["en"] = new Markov(2, 140 - hashtag.length);
-markov["de"] = new Markov(2, 140 - hashtag.length);
+ctx.fillStyle = orange;
+ctx.fillRect(0-1, 0-1, img.width+2, img.height+2);
 
-const tweets = database.ref("tweets");
-tweets.once("value", snap => {
-	snap.forEach(add);
-	tweeter();
-});
+ctx.strokeStyle = white;
+ctx.globalAlpha = 0.5;
+ctx.arc(250, 250, 200, 0, Math.PI * 2);
+ctx.stroke();
 
-function add(tweet) {
-	const text = tweet.child("text").val();
-	if (!tweet.child("text").exists() ||
-		text.indexOf("RT ") === 0)
-		return;
-
-	const lang = tweet.child("lang").val();
-	if (lang === "en" || lang === "de") {
-		markov[lang].feed(text);
-	}
-}
-
-function tweeter() {
-	const total = markov["en"].count() + markov["de"].count();
-	const result = Math.random() * total <= markov["de"].count() ?
-		markov["de"].generate() : markov["en"].generate();
-
-	if (result.length >= 10) {
-		console.log(result + hashtag);
-		setTimeout(tweeter, 500);
-	} else {
-		tweeter();
-	}
-}
+fs.writeFileSync("img.png", Canvas.encodePNGSync(img));

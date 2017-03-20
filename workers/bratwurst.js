@@ -5,6 +5,9 @@ const BlenderJob = require("./../modules/blender")();
 const log = require("./../modules/log");
 const utils = require("./../modules/utils");
 
+const tmp = require("tmp");
+tmp.setGracefulCleanup();
+
 const root = path.resolve(path.join(__dirname, ".."));
 
 stream("#onabratwurst", tweetObject => {
@@ -22,15 +25,15 @@ stream("#onabratwurst", tweetObject => {
 	const pyString = "import bpy\n" +
 		`bpy.data.objects["Text"].data.body = "${text}"`;
 
-	const pyfile = path.join(root, "tmp", "bratwurst.py");
+	const pyfile = tmp.fileSync({ mode: 644, prefix: "bratwurst-", postfix: ".py" }).name;
 	const blend = path.join(root, "blends", "message.blend");
-	const media = path.join(root, "tmp", "message0001.jpg");
+	const media = tmp.fileSync({ mode: 644, prefix: "bratwurst-", postfix: ".jpg" }).name;
 	fs.writeFile(pyfile, pyString, function (err) {
 		if (err) return log(err);
 
 		new BlenderJob(blend)
 			.python(pyfile)
-			.save(path.join(root, "tmp", "message.jpg"), err => {
+			.save(media, err => {
 				if (err) return log(err);
 
 				tweet(`@${username} "${text}" [${utils.time(start, Date.now())}]`, {

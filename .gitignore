@@ -2,7 +2,7 @@ bratwursts/
 node_modules/
 charts/results/
 backups/
-.vscode/
 keys/
-tmp/
+.vscode/
+lib/pureimage/
 console.log

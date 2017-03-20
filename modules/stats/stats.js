@@ -162,7 +162,7 @@ function sourceFunc(tweets) {
 						return log(err);
 					}
 
-					pathToChart.source = chartDir + "/sources0001.png";
+					pathToChart.source = chartDir + "/sources.png";
 					infos.source = perfectSource["name"][0];
 
 					resolve();
@@ -226,7 +226,7 @@ function globalFunc(tweets) {
 						return log(err);
 					}
 
-					pathToChart.global = chartDir + "/global0001.png";
+					pathToChart.global = chartDir + "/global.png";
 					for (var i = 0; i < finalArray.length; i++) {
 						if (finalArray[i]["value"] == max) infos.global = countries[i].id;
 					}
@@ -316,7 +316,7 @@ function timesFunc(tweets) {
 							return log(err);
 						}
 
-						pathToChart.times = path.resolve(chartDir + "/times0001.png");
+						pathToChart.times = path.resolve(chartDir + "/times.png");
 
 						const reversed = Object.keys(hours).map(key => {
 							return {

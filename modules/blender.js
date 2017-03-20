@@ -1,5 +1,6 @@
 const {exec} = require("child_process");
 const path = require("path");
+const renameSync = require("fs").renameSync;
 let PATH;
 
 const Queue = require("./queue");
@@ -34,6 +35,7 @@ class BlenderJob {
 		return this;
 	}
 	save(output, callback) {
+		var singleFrame = !this.frameStart;
 		var execString = PATH + "-b " + this.blendFile;
 		if (this.pyFile) execString += " -P " + this.pyFile;
 		if (typeof output === "string") {
@@ -61,15 +63,17 @@ class BlenderJob {
 			}
 			if (format) execString += " -F " + format;
 		}
-		if (this.frameStart) {
+		if (!singleFrame) {
 			if (this.frameEnd) {
 				execString += " -s " + this.frameStart + " -e " + this.frameEnd + (this.frameStep ? " -j " + this.frameStep : "");
 				execString += " -a";
 			} else {
+				singleFrame = true;
 				execString += " -f " + this.frameStart;
 			}
 		} else {
-			execString += " -f " + 1;
+			this.frameStart = 1;
+			execString += " -f " + this.frameStart;
 		}
 
 		queue.push(done => {
@@ -77,6 +81,15 @@ class BlenderJob {
 				if (err) {
 					done();
 					return callback(err);
+				}
+
+				if (singleFrame) {
+					var f = this.frameStart.toString(); // number
+					var str = "";
+					for (var i = 0; i < Math.max(0, 4 - f.length); i++) str += "0";
+					str += f;
+					var name = output.split(".")[0] + str + path.extname(output);
+					renameSync(name, output);
 				}
 
 				if (this.frameEnd === void 0) {

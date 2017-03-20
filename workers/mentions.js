@@ -16,11 +16,6 @@ Array.prototype.min = function () {
 	return Math.min.apply(null, this);
 };
 
-// function quote(str) {
-// 	return str.replace(/(?=[\/\\^$*+?.()|{}[\]])/g, "\\");
-// }
-// const regex = query => new RegExp(query);
-
 const reply = {
 	replies: {
 		invented: [
@@ -41,7 +36,7 @@ const reply = {
 		],
 		follow: [
 			// "Thanks for the follow! Following gives you special Bratwurst priorities. \"@" + botName + " help\" for more bot information.",
-			"Thanks for the follow, {{name}}! \"@" + botName + " help\" for more bot information."
+			"Thanks for the follow, {{name}}! 🎉 \"@" + botName + " help\" for more bot information."
 		]
 	},
 	get(type) {
@@ -49,40 +44,11 @@ const reply = {
 	}
 };
 
-const stream = client.stream("user");
-
-/*
- * Follows
- */
-stream.on("follow", function (event) {
-	const name = event.source.name;
-	const screenName = event.source.screen_name;
-
-	if (screenName !== botName) {
-		const status = "@" + screenName + " " + reply.get("follow").replace("{{name}}", name);
-		tweet(status, err => {
-			if (err) return log(err);
-		});
-		log("@" + screenName + " followed");
-	}
-});
-
 /*
  * mention
  */
 _stream("@" + botName, function (tweetObj) {
 	const user = tweetObj.user;
-
-	// is in reply to Bratwurstbot?
-	const mentions = tweetObj.entities.user_mentions;
-	let mentioned = false;
-	for (let i = 0; i < mentions.length; i++) {
-		if (mentions[i].screen_name == botName) {
-			mentioned = true;
-			break;
-		}
-	}
-	if (!mentioned) return;
 
 	const start = now(); // set timestamp of the request
 	const message = tweetObj.text.toLowerCase();
@@ -98,10 +64,8 @@ _stream("@" + botName, function (tweetObj) {
 	database.isIgnored(username, _ignored => {
 		if (_ignored) {
 			ignored = true;
-			console.log("ignored")
 		} else {
 			ignored = false;
-			console.log("noticed")
 		}
 		gotIgnored();
 	});
@@ -131,7 +95,7 @@ _stream("@" + botName, function (tweetObj) {
 		 */
 		const bot_name = "@" + botName.toLowerCase();
 		if (messageHas(bot_name) === 0) {
-			const processed = message.replace(/@Bratwurst_Bot\s+/g, "");
+			const processed = message.replace(/(\@Bratwurst_bot )/gi, "");
 			const has = (query, i) => {
 				if (i !== void 0) return processed.indexOf(query) === i;
 				return processed.indexOf(query) > -1;
@@ -268,6 +232,24 @@ _stream("@" + botName, function (tweetObj) {
 		if (returnValue.join(" ") !== baseValue) {
 			send();
 		}
+	}
+}, 30);
+
+const stream = client.stream("user");
+
+/*
+ * Follows
+ */
+stream.on("follow", function (event) {
+	const name = event.source.name;
+	const screenName = event.source.screen_name;
+
+	if (screenName !== botName) {
+		const status = "@" + screenName + " " + reply.get("follow").replace("{{name}}", name);
+		tweet(status, err => {
+			if (err) return log(err);
+		});
+		log("@" + screenName + " followed");
 	}
 });
 
