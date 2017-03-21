@@ -56,7 +56,7 @@ function tweeter() {
 
 	if (result.length >= 15 && new RegExp("bratwurst", "gi").test(result)) {
 		log("Random sentence: " + result, random ? "Markov Word" : "Markov Character");
-		tweet(result + hashtag, () => tweetAt());
+		tweet(result + hashtag);
 	} else {
 		tweeter();
 	}
