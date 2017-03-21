@@ -67,7 +67,7 @@ function tweetAt() {
 	// const d = Date.now();
 	// const t = Math.ceil(d / interval);
 	// setTimeout(tweeter, t * interval - d);
-	new cron.CronJob("00 */30 * * * 1-5", tweeter, null, true, "Europe/Berlin");
+	new cron.CronJob("00 00,30 * * * 1-5", tweeter, null, true, "Europe/Berlin");
 }
 
 log("Markov Chain worker is listening");
