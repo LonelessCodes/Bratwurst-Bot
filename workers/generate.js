@@ -12,9 +12,10 @@ const log = require("./../modules/log");
 const hashtag = " #bot";
 
 // character level Markov chain
+// upped to 7-grams
 const markovChar = {};
-markovChar["en"] = new MarkovChar(6, 140 - hashtag.length - 1);
-markovChar["de"] = new MarkovChar(6, 140 - hashtag.length - 1);
+markovChar["en"] = new MarkovChar(7, 140 - hashtag.length - 1);
+markovChar["de"] = new MarkovChar(7, 140 - hashtag.length - 1);
 
 // word level markov chain
 const markovWord = {};
@@ -56,18 +57,13 @@ function tweeter() {
 
 	if (result.length >= 15 && new RegExp("bratwurst", "gi").test(result)) {
 		log("Random sentence: " + result, random ? "Markov Word" : "Markov Character");
-		tweet(result + hashtag, () => tweetAt());
+		tweet(result + hashtag);
 	} else {
 		tweeter();
 	}
 }
 function tweetAt() {
-	//                       30 Minutes
-	// const interval = 60000 * 30;
-	// const d = Date.now();
-	// const t = Math.ceil(d / interval);
-	// setTimeout(tweeter, t * interval - d);
-	new cron.CronJob("00 */30 * * * 1-5", tweeter, null, true, "Europe/Berlin");
+	new cron.CronJob("00 00 * * * 1-5", tweeter, null, true, "Europe/Berlin");
 }
 
 log("Markov Chain worker is listening");

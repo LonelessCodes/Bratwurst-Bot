@@ -1,4 +1,4 @@
-const {tweet, updateBio, client} = require("./../modules/twitter");
+const { tweet, updateBio, client } = require("./../modules/twitter");
 const stats = require("./../modules/stats/stats");
 const database = require("./../modules/database");
 const utils = require("./../modules/utils");
@@ -64,7 +64,7 @@ function dailyReport() {
 
 	new Promise((resolve, reject) => {
 		// fetch data
-		
+
 		database.ref("tweets").orderByChild("timestamp").startAt(Date.now() - 1000 * 3600 * 24).once("value", tweetsSnap => {
 			if (!tweetsSnap.exists()) return reject();
 			tweetsSnap = tweetsSnap.val();
@@ -123,7 +123,7 @@ function dailyReport() {
 				});
 			});
 		});
-	}).then(({name, number}) => {
+	}).then(({ name, number }) => {
 		// tweet data
 		let string =
 			`It is once again the end of the day. Top Bratwurst Tweeter of the last 24 hours is @${name} with ${number} ${number === 1 ? "tweet" : "tweets"} 🎉🎆. Congratulations!`;

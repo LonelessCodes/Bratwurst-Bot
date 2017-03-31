@@ -2,6 +2,7 @@ const child_process = require("child_process");
 const fs = require("fs");
 const log = require("./modules/log");
 const mkdir = require("mkdirp");
+const { CronJob } = require("cron");
 
 // prepare
 if (!fs.existsSync("backups/")) mkdir.sync("backups");
@@ -29,7 +30,7 @@ function restart() {
 	processes = [];
 	createWorker();
 }
-setInterval(restart, 1000 * 3600 * 6);
+setInterval(restart, 1000 * 3600 * 8);
 
 // create backup
 function backup() {
@@ -37,9 +38,13 @@ function backup() {
 		if (!snapshot.exists()) return;
 		const time = new Date();
 		const name = `${time.getFullYear()}-${time.getMonth() + 1}-${time.getDate()}`;
-		console.log(require("path").join(__dirname, "backups", name + ".json"));
-		fs.writeFile(require("path").join(__dirname, "backups", name + ".json"), JSON.stringify(snapshot.val(), null, 2), () => log("backup created"));
+		fs.writeFile(
+			require("path").join(__dirname, "backups", name + ".json"),
+			JSON.stringify(snapshot.val(), null, 2),
+			() => {	
+				log("Backup saved:", require("path").join(__dirname, "backups", name + ".json"));
+			});
 	});
-	setTimeout(backup, 1000 * 3600 * 24);
 }
-backup();
+
+new CronJob("00 00 00 * * *", backup, null, true, "Europe/Berlin");
