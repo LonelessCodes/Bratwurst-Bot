@@ -1,7 +1,7 @@
 let time;
 let lastMonthTime;
-let lastMonth;
-let lastYear;
+let monthName;
+let yearName;
 let chartDir;
 const fs = require("fs"),
 	mkdirp = require("mkdirp"),
@@ -9,7 +9,8 @@ const fs = require("fs"),
 	Promise = require("promise"),
 	BlenderJob = require("./../blender")(),
 	log = require("./../log"),
-	database = require("./../database");
+	database = require("./../database"),
+	canvas = require("./canvas");
 
 /**
  * fixes
@@ -48,8 +49,6 @@ String.prototype.template = function (params) {
 	}
 	return string;
 };
-
-const infos = {};
 
 /**
  * Create Dir for Maps
@@ -95,12 +94,15 @@ Number.prototype.getDaysOfMonth = function () {
 /**
  * py templates
  */
-const py = {
-	sources: fs.readFileSync(path.resolve(__dirname + "/py/sources.py"), "utf8"),
-	global: fs.readFileSync(path.resolve(__dirname + "/py/global.py"), "utf8"),
-	times: fs.readFileSync(path.resolve(__dirname + "/py/times.py"), "utf8")
-};
+// const py = {
+// 	sources: fs.readFileSync(path.resolve(__dirname + "/py/sources.py"), "utf8"),
+// 	global: fs.readFileSync(path.resolve(__dirname + "/py/global.py"), "utf8"),
+// 	times: fs.readFileSync(path.resolve(__dirname + "/py/times.py"), "utf8")
+// };
 
+/**
+ * SOURCES
+ */
 function sourceFunc(tweets) {
 	const localTime = new Date();
 	/**
@@ -109,16 +111,14 @@ function sourceFunc(tweets) {
 	return new Promise((resolve, reject) => {
 		const sources = {};
 
-		let numberSources = 0;
 		tweets.forEach(tweet => {
 			if (!tweet.child("source").exists()) return;
 			let s = tweet.child("source").val().split(">");
 			s = (s.length === 1 ? s[0] : s[1]).split("<")[0].replace("Twitter ", "").replace("for ", "");
 			sources[s] ? sources[s]++ : sources[s] = 1;
-			numberSources++;
 		});
 
-		const sourcesArray = Object.keys(sources).map(key => {
+		const data = Object.keys(sources).map(key => {
 			return {
 				value: sources[key],
 				name: key
@@ -127,116 +127,21 @@ function sourceFunc(tweets) {
 			return b.value - a.value;
 		});
 
-		const perfectSource = {
-			"value": [],
-			"name": []
-		};
-		for (let i = 0; i < 6; i++) {
-			if (sourcesArray[i]) {
-				perfectSource["value"].push(sourcesArray[i].value / numberSources * 100);
-				perfectSource["name"].push(sourcesArray[i].name);
-			} else {
-				perfectSource["value"].push(0);
-				perfectSource["name"].push("");
-			}
-		}
-
-		const pyString = py.sources.template({
-			data: JSON.stringify(perfectSource, null, 4),
-			lastMonth: lastMonth,
-			lastYear: lastYear,
+		const buf = canvas.source({
+			data,
+			monthName,
+			yearName,
 			renderTime: localTime.getTime()
 		});
+		if (buf instanceof Error || !buf) reject(buf);
 
-		fs.writeFile(chartDir + "/sources.py", pyString, err => {
-			if (err) {
-				reject(err);
-				return log(err);
-			}
-
-			new BlenderJob(path.resolve(__dirname + "/../../blends/stats_sources.blend"))
-				.python(chartDir + "/sources.py")
-				.save(chartDir + "/sources.png", err => {
-					if (err) {
-						reject(err);
-						return log(err);
-					}
-
-					pathToChart.source = chartDir + "/sources.png";
-					infos.source = perfectSource["name"][0];
-
-					resolve();
-				});
-		});
+		resolve({ buf, best: data[0]["name"] });
 	});
 }
 
-function globalFunc(tweets) {
-	const localTime = new Date();
-
-	return new Promise((resolve, reject) => {
-		const global = {};
-		tweets.forEach(tweet => {
-			if (!tweet.child("place").exists()) return;
-			const s = tweet.child("place").val();
-			if (!global[s]) global[s] = 0;
-			global[s]++;
-		});
-
-		const countries = [
-			{ id: "AE" }, { id: "AF" }, { id: "AL" }, { id: "AM" }, { id: "AO" }, { id: "AR" }, { id: "AT" }, { id: "AU" }, { id: "AZ" }, { id: "BA" }, { id: "BD" }, { id: "BE" }, { id: "BF" }, { id: "BG" }, { id: "BI" }, { id: "BJ" }, { id: "BN" }, { id: "BO" }, { id: "BR" }, { id: "BS" }, { id: "BT" }, { id: "BW" }, { id: "BY" }, { id: "BZ" }, { id: "CA" }, { id: "CD" }, { id: "CF" }, { id: "CG" }, { id: "CH" }, { id: "CI" }, { id: "CL" }, { id: "CM" }, { id: "CN" }, { id: "CO" }, { id: "CR" }, { id: "CU" }, { id: "CY" }, { id: "CZ" }, { id: "DE" }, { id: "DJ" }, { id: "DK" }, { id: "DO" }, { id: "DZ" }, { id: "EC" }, { id: "EE" }, { id: "EG" }, { id: "EH" }, { id: "ER" }, { id: "ES" }, { id: "ET" }, { id: "FK" }, { id: "FI" }, { id: "FJ" }, { id: "FR" }, { id: "GA" }, { id: "GB" }, { id: "GE" }, { id: "GF" }, { id: "GH" }, { id: "GL" }, { id: "GM" }, { id: "GN" }, { id: "GQ" }, { id: "GR" }, { id: "GT" }, { id: "GW" }, { id: "GY" }, { id: "HN" }, { id: "HR" }, { id: "HT" }, { id: "HU" }, { id: "ID" }, { id: "IE" }, { id: "IL" }, { id: "IN" }, { id: "IQ" }, { id: "IR" }, { id: "IS" }, { id: "IT" }, { id: "JM" }, { id: "JO" }, { id: "JP" }, { id: "KE" }, { id: "KG" }, { id: "KH" }, { id: "KP" }, { id: "KR" }, { id: "XK" }, { id: "KW" }, { id: "KZ" }, { id: "LA" }, { id: "LB" }, { id: "LK" }, { id: "LR" }, { id: "LS" }, { id: "LT" }, { id: "LU" }, { id: "LV" }, { id: "LY" }, { id: "MA" }, { id: "MD" }, { id: "ME" }, { id: "MG" }, { id: "MK" }, { id: "ML" }, { id: "MM" }, { id: "MN" }, { id: "MR" }, { id: "MW" }, { id: "MX" }, { id: "MY" }, { id: "MZ" }, { id: "NA" }, { id: "NC" }, { id: "NE" }, { id: "NG" }, { id: "NI" }, { id: "NL" }, { id: "NO" }, { id: "NP" }, { id: "NZ" }, { id: "OM" }, { id: "PA" }, { id: "PE" }, { id: "PG" }, { id: "PH" }, { id: "PL" }, { id: "PK" }, { id: "PR" }, { id: "PS" }, { id: "PT" }, { id: "PY" }, { id: "QA" }, { id: "RO" }, { id: "RS" }, { id: "RU" }, { id: "RW" }, { id: "SA" }, { id: "SB" }, { id: "SD" }, { id: "SE" }, { id: "SI" }, { id: "SJ" }, { id: "SK" }, { id: "SL" }, { id: "SN" }, { id: "SO" }, { id: "SR" }, { id: "SS" }, { id: "SV" }, { id: "SY" }, { id: "SZ" }, { id: "TD" }, { id: "TF" }, { id: "TG" }, { id: "TH" }, { id: "TJ" }, { id: "TL" }, { id: "TM" }, { id: "TN" }, { id: "TR" }, { id: "TT" }, { id: "TW" }, { id: "TZ" }, { id: "UA" }, { id: "UG" }, { id: "US" }, { id: "UY" }, { id: "UZ" }, { id: "VE" }, { id: "VN" }, { id: "VU" }, { id: "YE" }, { id: "ZA" }, { id: "ZM" }, { id: "ZW" }
-		];
-
-		const values = [];
-		const finalArray = countries.map((country, i) => {
-			let value = 0;
-			Object.keys(global).some(key => {
-				if (country.id == key) {
-					value = global[key];
-					return true;
-				}
-			});
-			values.push(value);
-			return {
-				"name": "Curve." + i.toZeros(),
-				"value": value
-			};
-		});
-		const max = values.max();
-
-		const pyString = py.global.template({
-			data: JSON.stringify(finalArray, null, 4),
-			max: max,
-			lastMonth: lastMonth,
-			lastYear: lastYear,
-			renderTime: localTime.getTime()
-		});
-
-		fs.writeFile(chartDir + "/global.py", pyString, err => {
-			if (err) {
-				reject(err);
-				return log(err);
-			}
-
-			new BlenderJob(path.resolve(__dirname + "/../../blends/stats_global.blend"))
-				.python(chartDir + "/global.py")
-				.save(chartDir + "/global.png", err => {
-					if (err) {
-						reject(err);
-						return log(err);
-					}
-
-					pathToChart.global = chartDir + "/global.png";
-					for (var i = 0; i < finalArray.length; i++) {
-						if (finalArray[i]["value"] == max) infos.global = countries[i].id;
-					}
-
-					resolve();
-				});
-		});
-	});
-}
-
+/**
+ * TIMES
+ */
 function timesFunc(tweets) {
 	const localTime = new Date();
 
@@ -265,76 +170,93 @@ function timesFunc(tweets) {
 
 			const finalHours = [];
 			for (let i = 0; i < 12; i++) {
-				const first = hours["" + (i * 2)];
-				const second = hours["" + (i * 2 + 1)];
+				const first = hours[(i * 2).toString()];
+				const second = hours[(i * 2 + 1).toString()];
 				finalHours.push((
 					(first ? first : 0) +
 					(second ? second : 0)
 				) / days.length);
 			}
-			finalHours.reverse();
 
 			const finalMonth = [];
 			for (var i = 0; i < 12; i++) {
 				if (lastMonthTime.getMonth() === i) {
 					let month = days.length > 0 && tweets.numChildren() > 0 ? tweets.numChildren() / days.length : 0;
 					finalMonth.push(month);
-					database.ref("stats/month").child(i.toMonth()).set(month);
+					// database.ref("stats/month").child(i.toMonth()).set(month);
 				} else {
 					const result = stats.child(i.toMonth());
 					finalMonth.push(result.exists() ? result.val() : 0);
 				}
 			}
-			finalMonth.reverse();
 
-			const finalJSON = {
-				"times": finalHours,
-				"months": finalMonth
-			};
-
-			const pyString = py.times.template({
-				times: JSON.stringify(finalJSON.times, null, 4),
-				months: JSON.stringify(finalJSON.months, null, 4),
-				maxTime: Math.round(finalHours.max()),
-				maxMonth: Math.round(finalMonth.max()),
-				lastMonth: lastMonth,
-				lastYear: lastYear,
+			const buf = canvas.times({
+				times: finalHours,
+				months: finalMonth,
+				maxTime: finalHours.max(),
+				maxMonth: finalMonth.max(),
+				monthName,
+				yearName,
 				renderTime: localTime.getTime()
 			});
+			if (buf instanceof Error) reject();
 
-			fs.writeFile(chartDir + "/times.py", pyString, err => {
-				if (err) {
-					reject(err);
-					return log(err);
-				}
+			const reversed = Object.keys(hours).map(key => {
+				return {
+					value: hours[key],
+					name: key
+				};
+			}).sort(function (a, b) {
+				return b.value - a.value;
+			})[0];
 
-				new BlenderJob(path.resolve(__dirname + "/../../blends/stats_time.blend"))
-					.python(path.resolve(chartDir + "/times.py"))
-					.save(path.resolve(chartDir + "/times.png"), err => {
-						if (err) {
-							reject(err);
-							return log(err);
-						}
-
-						pathToChart.times = path.resolve(chartDir + "/times.png");
-
-						const reversed = Object.keys(hours).map(key => {
-							return {
-								value: hours[key],
-								name: key
-							};
-						}).sort(function (a, b) {
-							return b.value - a.value;
-						})[0];
-						if (reversed) infos.times = reversed.name;
-
-						resolve();
-					});
-			});
+			resolve({buf, best: reversed ? reversed.name : null});
 		});
 	});
 }
 
+/**
+ * GLOBAL
+ */
+function globalFunc(tweets) {
+	const localTime = new Date();
+
+	return new Promise((resolve, reject) => {
+		const data = {};
+		tweets.forEach(tweet => {
+			if (!tweet.child("place").exists()) return;
+			const s = tweet.child("place").val();
+			if (!data[s]) data[s] = 0;
+			data[s]++;
+		});
+
+		const max = Object.keys(data).map(a => data[a]).max();
+
+		const buf = canvas.global({
+			data,
+			max,
+			monthName,
+			yearName,
+			renderTime: localTime.getTime()
+		});
+		if (buf instanceof Error || !buf) reject(buf);
+
+		const finalArray = Object.keys(data).map(code => {
+			return {
+				id: code,
+				value: data[code]
+			};
+		}).sort((a, b) => {
+			return b.value - a.value;
+		});
+
+		resolve({buf, best: finalArray[0]});
+	});
+}
+
+/**
+ * BEST USER
+ */
 function bestUserFunc(tweets) {
 	return new Promise((resolve, reject) => {
 		const users = {};
@@ -395,30 +317,60 @@ function getTweets(cb) {
 	query.once("value", cb);
 }
 
-const pathToChart = {};
 function createStats(callback, callback2) {
 	time = new Date();
 	lastMonthTime = new Date(time.getTime() - 1000 * 3600 * 24 * time.getTime().getDaysOfLastMonth());
 
-	lastMonth = ((time.getMonth() - 1 == -1) ? 12 : (time.getMonth() - 1)).toMonth();
-	lastYear = ((time.getMonth() - 1 == -1) ? time.getFullYear() - 1 : time.getFullYear());
+	monthName = ((time.getMonth() - 1 == -1) ? 12 : (time.getMonth() - 1)).toMonth();
+	yearName = ((time.getMonth() - 1 == -1) ? time.getFullYear() - 1 : time.getFullYear());
 
-	chartDir = path.resolve(path.join(__dirname, "/../../stats", lastYear.toString(), lastMonth.toString()));
+	chartDir = path.resolve(path.join(__dirname, "/../../stats", yearName.toString() + "-" + monthName));
 
 	mkdirp(chartDir, err => {
 		if (err) return log(err);
 		getTweets(tweets => {
-			sourceFunc(tweets).then(() => {
-				return globalFunc(tweets);
-			}).then(() => {
-				return timesFunc(tweets);
-			}).then(() => {
-				callback(pathToChart, infos);
+			Promise.all([
+				sourceFunc(tweets),
+				globalFunc(tweets),
+				timesFunc(tweets)
+			]).then(([
+				{ buf: source_buf, best: source_best },
+				{ buf: global_buf, best: global_best },
+				{ buf: times_buf, best: times_best }
+			]) => {
+				callback({
+					source: source_buf,
+					global: global_buf,
+					times: times_buf
+				}, {
+					source: source_best,
+					global: global_best,
+					times: times_best
+				});
 				bestUserFunc(tweets).then(callback2).catch(console.log);
 			});
 		});
 	});
 }
 
-module.exports.charts = createStats;
-module.exports.blender = BlenderJob;
+time = new Date();
+lastMonthTime = new Date(time.getTime() - 1000 * 3600 * 24 * time.getTime().getDaysOfLastMonth());
+
+monthName = ((time.getMonth() - 1 == -1) ? 12 : (time.getMonth() - 1)).toMonth();
+yearName = ((time.getMonth() - 1 == -1) ? time.getFullYear() - 1 : time.getFullYear());
+
+getTweets(tweets => {
+	console.log("Got tweets");
+	sourceFunc(tweets)
+		.then(({buf}) => {
+			fs.writeFileSync("../../img.png", buf);
+			console.log("done");
+			process.exit();
+		}).catch(err => {
+			console.log(err);
+			process.exit();
+		});
+});
+
+// module.exports.charts = createStats;
+// module.exports.blender = BlenderJob;

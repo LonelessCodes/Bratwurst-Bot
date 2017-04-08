@@ -28,16 +28,16 @@ Date.prototype.getDaysOfMonth = function () {
 
 const month = () => {
 	const time = new Date();
-	stats.charts(function (paths, info) {
+	stats.charts((bufs, info) => {
 		let string = "Bratwurst tweeters were most active " + (info.times > 5 ? info.times > 11 ? info.times > 14 ? info.times > 18 ? info.times > 21 ? "at night" : "in the evening" : "in the afternoon" : "around noon" : "in the morning" : "at night") + ". ";
 		string += "Most tweeters came from " + info.global;
-		string += " [" + (Date.now() - time.getTime()) + "ms] #BratwurstStats";
+		string += " [" + utils.time(time.getTime(), Date.now()) + "] #BratwurstStats";
 
 		tweet(string, {
 			media: [
-				paths.times,
-				paths.global,
-				paths.source
+				bufs.times,
+				bufs.global,
+				bufs.source
 			]
 		}, err => {
 			if (err) return log(err);
@@ -53,7 +53,7 @@ const month = () => {
 	});
 };
 // cron new JOB
-new cron.CronJob("00 00 00 01 * *", month, null, true, "Europe/Berlin");
+new cron.CronJob("0 0 1 * *", month, null, true, "Europe/Berlin");
 
 /**
  * Daily Report
@@ -137,7 +137,7 @@ function dailyReport() {
 	});
 }
 // cron new JOB
-new cron.CronJob("00 00 00 * * *", dailyReport, null, true, "Europe/Berlin");
+new cron.CronJob("0 0 * * *", dailyReport, null, true, "Europe/Berlin");
 
 /**
  * Update Bio
