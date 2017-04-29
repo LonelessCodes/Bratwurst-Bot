@@ -6,7 +6,6 @@ const { CronJob } = require("cron");
 
 // prepare
 if (!fs.existsSync("backups/")) mkdir.sync("backups");
-if (!fs.existsSync("stats/")) mkdir.sync("stats");
 
 let processes = [];
 

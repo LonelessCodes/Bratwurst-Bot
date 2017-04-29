@@ -2,13 +2,7 @@ let time;
 let lastMonthTime;
 let monthName;
 let yearName;
-let chartDir;
-const fs = require("fs"),
-	mkdirp = require("mkdirp"),
-	path = require("path"),
-	Promise = require("promise"),
-	BlenderJob = require("./../blender")(),
-	log = require("./../log"),
+const Promise = require("promise"),
 	database = require("./../database"),
 	canvas = require("./canvas");
 
@@ -90,15 +84,6 @@ Number.prototype.getDaysOfMonth = function () {
 	var month = a.getMonth();
 	return new Date(year, month, 0).getDate();
 };
-
-/**
- * py templates
- */
-// const py = {
-// 	sources: fs.readFileSync(path.resolve(__dirname + "/py/sources.py"), "utf8"),
-// 	global: fs.readFileSync(path.resolve(__dirname + "/py/global.py"), "utf8"),
-// 	times: fs.readFileSync(path.resolve(__dirname + "/py/times.py"), "utf8")
-// };
 
 /**
  * SOURCES
@@ -259,6 +244,8 @@ function globalFunc(tweets) {
  */
 function bestUserFunc(tweets) {
 	return new Promise((resolve, reject) => {
+		// TODO: sort best user by id_str. Get username via Twitter API 
+		// (to make sure user is @ even if they changed their usename)
 		const users = {};
 		tweets.forEach(tweet => {
 			const thing = tweet.child("user/screen_name").val();
@@ -278,32 +265,20 @@ function bestUserFunc(tweets) {
 		const user = usersArray[0].name;
 		const value = usersArray[0].value;
 
-		const pyString =
-			"import bpy\n" +
-			"bpy.data.objects['Best'].data.body = \"@" + user + "\"\n" +
-			"bpy.data.objects['Right'].particle_systems['ParticleSystem'].seed = " + Math.floor(Math.random() * 1000) + "\n" +
-			"bpy.data.objects['Left'].particle_systems['ParticleSystem'].seed = " + Math.floor(Math.random() * 1000);
+		"import bpy\n" +
+		"bpy.data.objects['Best'].data.body = \"@" + user + "\"\n" +
+		"bpy.data.objects['Right'].particle_systems['ParticleSystem'].seed = " + Math.floor(Math.random() * 1000) + "\n" +
+		"bpy.data.objects['Left'].particle_systems['ParticleSystem'].seed = " + Math.floor(Math.random() * 1000);
 
-		fs.writeFile(chartDir + "/user.py", pyString, err => {
-			if (err) {
-				reject(err);
-				return log(err);
-			}
+		const buf = canvas.user({
+			user
+		});
+		if (buf instanceof Error || !buf) reject(buf);
 
-			new BlenderJob(path.resolve(__dirname + "/../../blends/stats_user.blend"))
-				.python(chartDir + "/user.py")
-				.frame(1, 84)
-				.save(chartDir + "/user/frame.png", err => {
-					if (err) {
-						reject(err);
-						return log(err);
-					}
-					resolve({
-						path: chartDir + "/user/frame.gif",
-						user: user,
-						value: value
-					});
-				});
+		resolve({
+			buf,
+			user,
+			value
 		});
 	});
 }
@@ -324,32 +299,27 @@ function createStats(callback, callback2) {
 	monthName = ((time.getMonth() - 1 == -1) ? 12 : (time.getMonth() - 1)).toMonth();
 	yearName = ((time.getMonth() - 1 == -1) ? time.getFullYear() - 1 : time.getFullYear());
 
-	chartDir = path.resolve(path.join(__dirname, "/../../stats", yearName.toString() + "-" + monthName));
-
-	mkdirp(chartDir, err => {
-		if (err) return log(err);
-		getTweets(tweets => {
-			Promise.all([
-				sourceFunc(tweets),
-				globalFunc(tweets),
-				timesFunc(tweets)
-			]).then(([
-				{ buf: source_buf, best: source_best },
-				{ buf: global_buf, best: global_best },
-				{ buf: times_buf, best: times_best }
-			]) => {
-				callback({
-					source: source_buf,
-					global: global_buf,
-					times: times_buf
-				}, {
-					source: source_best,
-					global: global_best,
-					times: times_best
-				});
-				bestUserFunc(tweets).then(callback2).catch(console.log);
+	getTweets(tweets => {
+		Promise.all([
+			sourceFunc(tweets),
+			globalFunc(tweets),
+			timesFunc(tweets)
+		]).then(([
+			{ buf: source_buf, best: source_best },
+			{ buf: global_buf, best: global_best },
+			{ buf: times_buf, best: times_best }
+		]) => {
+			callback({
+				source: source_buf,
+				global: global_buf,
+				times: times_buf
+			}, {
+				source: source_best,
+				global: global_best,
+				times: times_best
 			});
-		});
+			bestUserFunc(tweets).then(callback2).catch(console.log);
+		}).catch(console.log);
 	});
 }
 
@@ -359,18 +329,4 @@ lastMonthTime = new Date(time.getTime() - 1000 * 3600 * 24 * time.getTime().getD
 monthName = ((time.getMonth() - 1 == -1) ? 12 : (time.getMonth() - 1)).toMonth();
 yearName = ((time.getMonth() - 1 == -1) ? time.getFullYear() - 1 : time.getFullYear());
 
-getTweets(tweets => {
-	console.log("Got tweets");
-	sourceFunc(tweets)
-		.then(({buf}) => {
-			fs.writeFileSync("../../img.png", buf);
-			console.log("done");
-			process.exit();
-		}).catch(err => {
-			console.log(err);
-			process.exit();
-		});
-});
-
-// module.exports.charts = createStats;
-// module.exports.blender = BlenderJob;
+module.exports.charts = createStats;

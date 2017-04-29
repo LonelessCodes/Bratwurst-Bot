@@ -1,7 +1,6 @@
-bratwursts/
+blends/
+images/bratwursts/
 node_modules/
-charts/results/
-backups/
 keys/
 .vscode/
 console.log

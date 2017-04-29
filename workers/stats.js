@@ -43,9 +43,9 @@ const month = () => {
 			if (err) return log(err);
 			log(string, (string.length + 23 <= 140));
 		});
-	}, ({ path, user, value }) => {
+	}, ({ buf, user, value }) => {
 		tweet("Top Bratwurst tweeter of the month is @" + user + " with " + value + " tweets. Congratulations!!!", {
-			media: [path]
+			media: [buf]
 		}, err => {
 			if (err) return log(err);
 			log("Top Bratwurst tweeter of the month is @" + user + " with " + value + " tweets. Congratulations!!!", "Top Bratwurst tweeter of the month is @" + user + " with " + value + " tweets. Congratulations!!!".length + 23 <= 140 ? "shortened" : "");

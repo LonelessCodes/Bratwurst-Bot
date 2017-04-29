@@ -1,13 +1,17 @@
-const Canvas = require("canvas-prebuilt");
+let Canvas;
+try {
+	Canvas = require("canvas");
+} catch (err) {
+	Canvas = require("canvas-prebuilt");
+}
 const GIF = require("gifencoder");
-const fs = require("fs");
 
 const path = require("path");
 
 const grey = "#4D4D4D";
 const grey2 = "#4C4C4C";
 const orange = "#FFC04D";
-const orange2 = "#F2A74C";
+// const orange2 = "#F2A74C";
 const green = "#78C07D";
 const white = "#FFFFFF";
 
@@ -399,7 +403,6 @@ module.exports.source = function source(opts) {
 		opts.data.forEach(e => total += e.value);
 
 		ctx.strokeStyle = grey;
-		ctx.lineWidth = 0.2 * r;
 		let progress = 0;
 		for (let i = 0; i < opts.data.length; i++) {
 			const percent = opts.data[i].value / total;
@@ -407,13 +410,12 @@ module.exports.source = function source(opts) {
 			ctx.fillStyle = white;
 			ctx.beginPath();
 			const y = (progress / total) * h * r;
-			const height = percent * h * r;
+			const height = Math.max(1, percent * h * r - 0.2 * r);
 			ctx.rect(0, y, 60 * r, height);
 			ctx.fill();
-			ctx.stroke();
 
 			if (height > 2 * r) {
-				const f = Math.min(4 * r, height - 0.5*r);
+				const f = Math.min(4 * r, height - 0.5 * r);
 				ctx.font = `bold ${f}px bold`;
 				ctx.fillStyle = green;
 				const text = (percent * 100).toFixed(1) + "%";
@@ -426,7 +428,7 @@ module.exports.source = function source(opts) {
 				ctx.font = `bold ${f}px bold`;
 				ctx.fillStyle = white;
 				ctx.fillText(opts.data[i].name, 63 * r, y + height / 2 + f / 2.6);
-			}	
+			}
 
 			progress += opts.data[i].value;
 		}
@@ -467,43 +469,139 @@ module.exports.source = function source(opts) {
 /**
  * BEST USER
  */
+function randomRange(v0, v1) {
+	return Math.random() * (v1 - v0) + v0;
+}
+
 module.exports.user = function user(opts) {
 	try {
-		const r = 6.4;
-		const encoder = new GIF(640, 360);
+		class Vector {
+			constructor(x, y) {
+				this.x = x;
+				this.y = y;
+			}
+		}
+		const g = 0.15;
+		class Particle extends Vector {
+			constructor(x, y, vx, vy, color) {
+				super(x, y);
+				this.origx = x;
+				this.origy = y;
+				this.origvx = vx;
+				this.origvy = vy;
+				this.color = color;
+				this.rot = Math.random() * 2 * Math.PI;
+				this.rot2 = Math.random() * 2 * Math.PI;
+				this.reset();
+			}
+
+			reset() {
+				this.x = this.origx;
+				this.y = this.origy;
+				this.vx = this.origvx;
+				this.vy = this.origvy;
+				this.g = g;
+			}
+
+			update() {
+				this.g += g / 2;
+				this.vy += this.g;
+				this.x += this.vx;
+				this.y += this.vy;
+			}
+
+			render(ctx) {
+				ctx.fillStyle = this.color;
+				ctx.save();
+				// rotation first
+				ctx.translate(this.x, this.y);
+				ctx.rotate(this.rot);
+
+				// than scale
+				ctx.scale(Math.cos(this.rot2) * 0.2 + 0.8, Math.cos(this.rot) * 0.2 + 0.8); // squish it to 2/3 vertical size
+
+				ctx.fillRect(0, 0, 12 * r, 12 * r);
+				ctx.restore();
+			}
+		}
+
+		// good stuff
+		const width = 640;
+		const height = 360;
+		const r = width / 100;
+
+		const encoder = new GIF(width, height);
 
 		encoder.start();
 		encoder.setRepeat(0);   // 0 for repeat, -1 for no-repeat 
 		encoder.setDelay(40);  // frame delay in ms 
 		encoder.setQuality(10); // image quality. 10 is default. 
 
-		const img = new Canvas(640, 360);
+		const img = new Canvas(width, height);
 		const ctx = img.getContext("2d");
 
-		ctx.addFont(comfortaa_r);
 		ctx.addFont(comfortaa_b);
 
-		for (let frame = 0; frame < 1; frame++) {
+		const colors = ["#FF83FC", "#FF83FC", "#FF7659", "#FF7659", "#BEFF50", "#4DFFC5", "#54A6FF", "#54A6FF"];
+
+		const particles = new Array(20).fill(null).map(() => new Particle(
+			randomRange(-50, -40), randomRange(-20, 20),
+			randomRange(0, 20), randomRange(-10, 5),
+			colors[Math.floor(Math.random() * colors.length)]
+		)).concat(new Array(20).fill(null).map(() => new Particle(
+			randomRange(width + 40, width + 50), randomRange(-20, 20),
+			randomRange(-20, 0), randomRange(-10, 5),
+			colors[Math.floor(Math.random() * colors.length)]
+		)));
+
+		for (let frame = 0; frame < 70; frame++) {
+			console.log(frame);
 
 			/**
 			 * BACKGROUND
-			 */
+			*/
 			ctx.fillStyle = white;
 			ctx.fillRect(0, 0, img.width, img.height);
+
+			/**
+			 * PARTICLES
+			 */
+			for (let i = 0; i < particles.length; i++) {
+				const vec = particles[i];
+				vec.update();
+				vec.render(ctx);
+			}
+
+			/**
+			 * TEXT
+			 */
+			ctx.fillStyle = grey;
+			ctx.font = `${8 * r}px bold`;
+			const text = "@" + opts.user;
+			const m = ctx.measureText(text);
+			if (m.width > width - 8 * r) {
+				const mult = (width - 8 * r) / m.width;
+				ctx.font = `${8 * r * mult}px bold`;
+				m.width *= mult;
+			}
+			ctx.fillText(
+				"@" + opts.user,
+				width / 2 - m.width / 2,
+				(height - 4 * r) / 2 + 8 / 3 * r
+			);
 
 			/**
 			 * LOWER BANNER
 			 */
 			ctx.fillStyle = grey;
-			ctx.fillRect(0, img.height - 4 * r, img.width, 4 * r);
+			ctx.fillRect(0, height - 4 * r, width, 4 * r);
 
 			ctx.fillStyle = white;
 			ctx.font = `${1.6 * r}px regular`;
 			const te = ctx.measureText("@bratwurst_bot");
-			ctx.fillText("@bratwurst_bot", img.width - te.width - 1 * r, img.height - 1.4 * r);
+			ctx.fillText("@bratwurst_bot", width - te.width - 1 * r, height - 1.4 * r);
 
 			encoder.addFrame(ctx);
-
 		}
 
 		encoder.finish();
