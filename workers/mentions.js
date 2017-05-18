@@ -250,6 +250,23 @@ stream.on("follow", function (event) {
 			if (err) return log(err);
 		});
 		log("@" + screenName + " followed");
+
+		database.ref("follower").child(Date.now().toString()).set({
+			type: "follow",
+			id: event.source.id_str,
+			name: screenName
+		});
+	}
+});
+stream.on("unfollow", function (event) {
+	const screenName = event.source.screen_name;
+
+	if (screenName !== botName) {
+		database.ref("follower").child(Date.now().toString()).set({
+			type: "unfollow",
+			id: event.source.id_str,
+			name: screenName
+		});
 	}
 });
 

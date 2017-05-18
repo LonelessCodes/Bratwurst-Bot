@@ -1,11 +1,10 @@
 const child_process = require("child_process");
 const fs = require("fs");
 const log = require("./modules/log");
-const mkdir = require("mkdirp");
 const { CronJob } = require("cron");
 
 // prepare
-if (!fs.existsSync("backups/")) mkdir.sync("backups");
+if (!fs.existsSync("backups/")) fs.mkdirSync("backups/");
 
 let processes = [];
 

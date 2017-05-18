@@ -15,7 +15,7 @@ const grey = "#4C4C4C";
 const white = "#FFFFFF";
 
 const font = new Canvas.Font("daniel", path.join(__dirname, "..", "lib", "fonts", "danielbd.ttf"));
-const comfortaa_r = new Canvas.Font("regular", path.join(__dirname, "..", "..", "lib", "fonts", "Comfortaa-Regular.ttf"));
+const comfortaa_r = new Canvas.Font("regular", path.join(__dirname, "..", "lib", "fonts", "Comfortaa-Regular.ttf"));
 
 stream("#onabratwurst", tweetObject => {
 	try {
@@ -39,7 +39,7 @@ stream("#onabratwurst", tweetObject => {
 		 */
 		const width = 3072 / 2 - 420;
 		const height = 2048 / 2 - 340;
-		const r = width / 1000;
+		const r = width / 100;
 		const img = new Canvas(width, height);
 		const ctx = img.getContext("2d");
 
@@ -106,10 +106,10 @@ stream("#onabratwurst", tweetObject => {
 		/**
 		 * LOWER BANNER
 		 */
-		ctx.fillStyle = grey;
+		ctx.fillStyle = white;
 		ctx.fillRect(0, img.height - 4 * r, img.width, 4 * r);
 
-		ctx.fillStyle = white;
+		ctx.fillStyle = grey;
 		ctx.font = `${1.6 * r}px regular`;
 		const te = ctx.measureText("@bratwurst_bot");
 		ctx.fillText("@bratwurst_bot", img.width - te.width - 1 * r, img.height - 1.4 * r);
@@ -126,8 +126,6 @@ stream("#onabratwurst", tweetObject => {
 		});
 
 		stream.on("end", function () {
-			fs.writeFileSync("img.jpg", Buffer.concat(bufs));
-
 			/**
 			 * send it off to the user
 			 */
