@@ -6,7 +6,7 @@ try {
 }
 const GIF = require("gifencoder");
 
-const path = require("path");
+// const path = require("path");
 
 const grey = "#4D4D4D";
 const grey2 = "#4C4C4C";
@@ -15,8 +15,10 @@ const orange = "#FFC04D";
 const green = "#78C07D";
 const white = "#FFFFFF";
 
-const comfortaa_r = new Canvas.Font("regular", path.join(__dirname, "..", "..", "lib", "fonts", "Comfortaa-Regular.ttf"));
-const comfortaa_b = new Canvas.Font("bold", path.join(__dirname, "..", "..", "lib", "fonts", "Comfortaa-Bold.ttf"));
+// Cairo on Raspi has got problems with custom fonts I discovered, so I'm commenting them 
+// until that's fixed
+// const comfortaa_r = new Canvas.Font("regular_font", path.join(__dirname, "..", "..", "lib", "fonts", "Comfortaa-Regular.ttf"));
+// const comfortaa_b = new Canvas.Font("bold_font", path.join(__dirname, "..", "..", "lib", "fonts", "Comfortaa-Bold.ttf"));
 
 const r = 20.48;
 
@@ -27,8 +29,8 @@ module.exports.times = function times(opts) {
 	try {
 		const img = new Canvas(Math.floor(100 * r), Math.floor(70 * r));
 		const ctx = img.getContext("2d");
-		ctx.addFont(comfortaa_r);
-		ctx.addFont(comfortaa_b);
+		// ctx.addFont(comfortaa_r);
+		// ctx.addFont(comfortaa_b);
 
 		/**
 		 * BACKGROUND
@@ -40,7 +42,7 @@ module.exports.times = function times(opts) {
 		 * HEADER
 		 */
 		ctx.fillStyle = grey;
-		ctx.font = `${4.3 * r}px bold`;
+		ctx.font = `bold ${4.3 * r}px regular`;
 		ctx.fillText(`Bratwurst Stats of ${opts.monthName}, ${opts.yearName}`, 4 * r, 8 * r);
 
 		const piece = Math.PI * 2 / 12;
@@ -195,8 +197,8 @@ module.exports.global = function global(opts) {
 		const img = new Canvas(Math.floor(106 * r), Math.floor(65 * r));
 		const ctx = img.getContext("2d");
 
-		ctx.addFont(comfortaa_r);
-		ctx.addFont(comfortaa_b);
+		// ctx.addFont(comfortaa_r);
+		// ctx.addFont(comfortaa_b);
 
 		/**
 		 * BACKGROUND
@@ -288,7 +290,7 @@ module.exports.global = function global(opts) {
 
 			if (sorted[i].value / total > .03) {
 
-				ctx.font = `bold ${2 * r}px bold`;
+				ctx.font = `bold ${2 * r}px regular`;
 				ctx.fillStyle = grey2;
 				const angle = (progress + sorted[i].value / 2) * digit - Math.PI / 2;
 				const w = ctx.measureText(sorted[i].id).width;
@@ -312,11 +314,11 @@ module.exports.global = function global(opts) {
 		 * HEADER
 		 */
 		ctx.fillStyle = white;
-		ctx.font = `${3 * r}px bold`;
+		ctx.font = `bold ${3 * r}px regular`;
 		text = `Number of Bratwurst tweets with geo tag sent in ${opts.monthName}, ${opts.yearName} by country`;
 		const m = ctx.measureText(text);
 		if (m.width > (img.width - 8 * r))
-			ctx.font = `${3 * r * ((img.width - 8 * r) / m.width)}px bold`;
+			ctx.font = `bold ${3 * r * ((img.width - 8 * r) / m.width)}px regular`;
 		ctx.fillText(text, 4 * r, 57 * r);
 
 		/**
@@ -381,8 +383,8 @@ module.exports.source = function source(opts) {
 		const img = new Canvas(Math.floor(100 * r), Math.floor(100 * r));
 		const ctx = img.getContext("2d");
 
-		ctx.addFont(comfortaa_r);
-		ctx.addFont(comfortaa_b);
+		// ctx.addFont(comfortaa_r);
+		// ctx.addFont(comfortaa_b);
 
 		let text = "";
 
@@ -416,7 +418,7 @@ module.exports.source = function source(opts) {
 
 			if (height > 2 * r) {
 				const f = Math.min(4 * r, height - 0.5 * r);
-				ctx.font = `bold ${f}px bold`;
+				ctx.font = `bold ${f}px regular`;
 				ctx.fillStyle = green;
 				const text = (percent * 100).toFixed(1) + "%";
 				const w = ctx.measureText(text).width;
@@ -425,7 +427,7 @@ module.exports.source = function source(opts) {
 
 			if (height > 1.2 * r) {
 				const f = Math.min(3.5 * r, height);
-				ctx.font = `bold ${f}px bold`;
+				ctx.font = `bold ${f}px regular`;
 				ctx.fillStyle = white;
 				ctx.fillText(opts.data[i].name, 63 * r, y + height / 2 + f / 2.6);
 			}
@@ -441,11 +443,11 @@ module.exports.source = function source(opts) {
 		ctx.fillRect(0, 86 * r, img.width, 10 * r);
 
 		ctx.fillStyle = white;
-		ctx.font = `${3 * r}px bold`;
+		ctx.font = `bold ${3 * r}px regular`;
 		text = `Most used apps to tweet about Bratwursts in ${opts.monthName}, ${opts.yearName}`;
 		const m = ctx.measureText(text);
 		if (m.width > (img.width - 8 * r))
-			ctx.font = `${3 * r * ((img.width - 8 * r) / m.width)}px bold`;
+			ctx.font = `bold ${3 * r * ((img.width - 8 * r) / m.width)}px regular`;
 		ctx.fillText(text, 4 * r, 92 * r);
 
 		/**
@@ -540,7 +542,7 @@ module.exports.user = function user(opts) {
 		const img = new Canvas(width, height);
 		const ctx = img.getContext("2d");
 
-		ctx.addFont(comfortaa_b);
+		// ctx.addFont(comfortaa_b);
 
 		const colors = ["#FF83FC", "#FF83FC", "#FF7659", "#FF7659", "#BEFF50", "#4DFFC5", "#54A6FF", "#54A6FF"];
 
@@ -576,12 +578,12 @@ module.exports.user = function user(opts) {
 			 * TEXT
 			 */
 			ctx.fillStyle = grey;
-			ctx.font = `${8 * r}px bold`;
+			ctx.font = `bold ${8 * r}px regular`;
 			const text = "@" + opts.user;
 			const m = ctx.measureText(text);
 			if (m.width > width - 8 * r) {
 				const mult = (width - 8 * r) / m.width;
-				ctx.font = `${8 * r * mult}px bold`;
+				ctx.font = `bold ${8 * r * mult}px regular`;
 				m.width *= mult;
 			}
 			ctx.fillText(

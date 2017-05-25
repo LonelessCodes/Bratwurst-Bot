@@ -15,14 +15,22 @@ module.exports.isIgnored = function (id, cb) {
 	if (!cb) cb = () => { };
 	
 	const ignore = database.ref("ignored/" + id);
+	const blacklist = database.ref("blacklist/" + id);
 	return new Promise((resolve, reject) => {
 		ignore.once("value", snapshot => {
 			if (snapshot.exists()) {
 				reject();
 				cb(true);
 			} else {
-				resolve();
-				cb(false);
+				blacklist.once("value", snapshot => {
+					if (snapshot.exists()) {
+						reject();
+						cb(true);
+					} else {
+						resolve();
+						cb(false);
+					}
+				});
 			}
 		});
 	});

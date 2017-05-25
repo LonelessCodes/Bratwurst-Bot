@@ -51,22 +51,22 @@ _stream("@" + botName, function (tweetObj) {
 	const user = tweetObj.user;
 
 	const start = now(); // set timestamp of the request
-	const message = tweetObj.text.toLowerCase();
+	let message = tweetObj.text.toLowerCase();
 	const messageHas = query => message.indexOf(query);
 	const username = user.screen_name;
 
 	// before going any further, check if this is not an echo or a retweet
 	if (username === botName || /^rt/.test(message)) return;
 
+	while (message.indexOf("  ") > -1) { // some people accidentially use double spaces for weird reasons :/
+		message = message.replace("  ", " ");
+	}
+
 	// now continue setting consts
 	const tweetID = tweetObj.id_str;
 	let ignored;
 	database.isIgnored(username, _ignored => {
-		if (_ignored) {
-			ignored = true;
-		} else {
-			ignored = false;
-		}
+		ignored = !!_ignored;
 		gotIgnored();
 	});
 	function gotIgnored() {

@@ -30,7 +30,7 @@ const month = () => {
 	const time = new Date();
 	stats.charts((bufs, info) => {
 		let string = "Bratwurst tweeters were most active " + (info.times > 5 ? info.times > 11 ? info.times > 14 ? info.times > 18 ? info.times > 21 ? "at night" : "in the evening" : "in the afternoon" : "around noon" : "in the morning" : "at night") + ". ";
-		string += "Most tweeters came from " + info.global;
+		string += "Most tweeters came from " + info.global.id + " (" + info.global.value + ")"; // seems like until now I forgot it's returning a object
 		string += " [" + utils.time(time.getTime(), Date.now()) + "] #BratwurstStats";
 
 		tweet(string, {

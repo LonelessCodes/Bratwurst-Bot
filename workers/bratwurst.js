@@ -14,8 +14,9 @@ try {
 const grey = "#4C4C4C";
 const white = "#FFFFFF";
 
-const font = new Canvas.Font("daniel", path.join(__dirname, "..", "lib", "fonts", "danielbd.ttf"));
-const comfortaa_r = new Canvas.Font("regular", path.join(__dirname, "..", "lib", "fonts", "Comfortaa-Regular.ttf"));
+// same as in /modules/stats/canvas.js
+// const font = new Canvas.Font("daniel", path.join(__dirname, "..", "lib", "fonts", "danielbd.ttf"));
+// const comfortaa_r = new Canvas.Font("regular", path.join(__dirname, "..", "lib", "fonts", "Comfortaa-Regular.ttf"));
 
 stream("#onabratwurst", tweetObject => {
 	try {
@@ -43,7 +44,7 @@ stream("#onabratwurst", tweetObject => {
 		const img = new Canvas(width, height);
 		const ctx = img.getContext("2d");
 
-		ctx.addFont(comfortaa_r);
+		// ctx.addFont(comfortaa_r);
 
 		ctx.save();
 		ctx.translate(-300, -200);
@@ -58,7 +59,7 @@ stream("#onabratwurst", tweetObject => {
 		const overlay = new Canvas(width, height);
 		const overctx = overlay.getContext("2d");
 
-		overctx.addFont(font);
+		// overctx.addFont(font);
 
 		overctx.save();
 		overctx.translate(-300, -200);
@@ -74,10 +75,10 @@ stream("#onabratwurst", tweetObject => {
 		overctx.save();
 		overctx.translate(-300, -200);
 
-		overctx.font = "50px daniel";
+		overctx.font = "50px regular";
 		let length = overctx.measureText(text).width;
 		if (length > width - 300) {
-			overctx.font = `${50 * ((width - 300) / (length / 2))}px daniel`;
+			overctx.font = `${50 * ((width - 300) / (length / 2))}px regular`;
 			length = length * ((width - 300) / (length / 2));
 			const t = text.length;
 			const v = (width - 300) / length;
