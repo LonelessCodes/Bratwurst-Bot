@@ -1,13 +1,13 @@
-const { tweet, updateBio, client } = require("./../modules/twitter");
-const stats = require("./../modules/stats/stats");
-const database = require("./../modules/database");
-const utils = require("./../modules/utils");
+const { tweet, updateBio, client } = require("../modules/twitter");
+const stats = require("../modules/stats/stats");
+const database = require("../modules/database");
+const utils = require("../modules/utils");
 const cron = require("cron");
 
 /**
  * Logger => in case of crashing device you always got a log file to show you what went wrong
  */
-const log = require("./../modules/log");
+const log = require("../modules/log");
 
 Array.prototype.max = function () {
 	return Math.max.apply(null, this);

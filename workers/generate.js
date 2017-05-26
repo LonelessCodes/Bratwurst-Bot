@@ -1,13 +1,13 @@
-const {tweet} = require("./../modules/twitter");
-const database = require("./../modules/database");
-const MarkovChar = require("./../lib/markov.js");
-const MarkovWord = require("./../lib/markov-word.js");
+const {tweet} = require("../modules/twitter");
+const database = require("../modules/database");
+const MarkovChar = require("../lib/markov.js");
+const MarkovWord = require("../lib/markov-word.js");
 const cron = require("cron");
 
 /**
  * Logger => in case of crashing device you always got a log file to show you what went wrong
  */
-const log = require("./../modules/log");
+const log = require("../modules/log");
 
 const hashtag = " #bot";
 

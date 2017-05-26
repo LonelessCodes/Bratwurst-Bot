@@ -1,9 +1,9 @@
 const fs = require("fs");
 const path = require("path");
-const { tweet, stream, botName } = require("./../modules/twitter");
-const log = require("./../modules/log");
-const utils = require("./../modules/utils");
-const curve = require("./../modules/curve");
+const { tweet, stream, botName } = require("../modules/twitter");
+const log = require("../modules/log");
+const utils = require("../modules/utils");
+const curve = require("../modules/curve");
 
 let Canvas;
 try {

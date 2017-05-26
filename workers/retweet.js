@@ -13,7 +13,7 @@ Array.prototype.min = function () {
 /*
  * Database Objects
  */
-const {User, Tweet} = require("./../modules/database_objects");
+const {User, Tweet} = require("../modules/database_objects");
 
 const users = database.ref("users");
 const tweets = database.ref("tweets");

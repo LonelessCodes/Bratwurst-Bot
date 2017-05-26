@@ -1,4 +1,4 @@
-const utils = require("../modules/utils");
+const utils = require("./utils");
 
 class SpamFilter {
 	constructor() {

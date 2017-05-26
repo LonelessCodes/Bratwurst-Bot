@@ -1,7 +1,7 @@
-const {tweet, client, botName, stream: _stream} = require("./../modules/twitter");
-const database = require("./../modules/database");
-const utils = require("./../modules/utils");
-const log = require("./../modules/log");
+const {tweet, client, botName, stream: _stream} = require("../modules/twitter");
+const database = require("../modules/database");
+const utils = require("../modules/utils");
+const log = require("../modules/log");
 const fs = require("fs");
 
 const now = time => {
