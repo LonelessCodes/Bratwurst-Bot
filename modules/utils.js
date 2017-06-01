@@ -75,6 +75,8 @@ module.exports.cleanText = function (tweet) {
 
 	str = str.replace(/[^a-zA-Z0-9ß.,:;?!&%\(\)äöü'" ]/g, "").replace(/&amp;/g, "&");
 
+	str = str.replace(/\&amp/g, "&");
+
 	while (/ \ /g.test(str))
 		str = str.replace(/ \ /g, " ");
 	if (str.charAt(str.length - 1) === " ")

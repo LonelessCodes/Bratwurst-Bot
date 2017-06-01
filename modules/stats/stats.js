@@ -168,7 +168,7 @@ function timesFunc(tweets) {
 				if (lastMonthTime.getMonth() === i) {
 					let month = days.length > 0 && tweets.numChildren() > 0 ? tweets.numChildren() / days.length : 0;
 					finalMonth.push(month);
-					// database.ref("stats/month").child(i.toMonth()).set(month);
+					database.ref("stats/month").child(i.toMonth()).set(month);
 				} else {
 					const result = stats.child(i.toMonth());
 					finalMonth.push(result.exists() ? result.val() : 0);
@@ -322,11 +322,5 @@ function createStats(callback, callback2) {
 		}).catch(console.log);
 	});
 }
-
-time = new Date();
-lastMonthTime = new Date(time.getTime() - 1000 * 3600 * 24 * time.getTime().getDaysOfLastMonth());
-
-monthName = ((time.getMonth() - 1 == -1) ? 12 : (time.getMonth() - 1)).toMonth();
-yearName = ((time.getMonth() - 1 == -1) ? time.getFullYear() - 1 : time.getFullYear());
 
 module.exports.charts = createStats;
