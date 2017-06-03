@@ -1,7 +1,7 @@
 const Twitter = require("twit");
 const fs = require("fs");
-const {roll} = require("./utils");
-const {EventEmitter} = require("events");
+const { roll } = require("./utils");
+const { EventEmitter } = require("events");
 const Queue = require("./queue");
 const retweet_queue = new Queue();
 
@@ -59,9 +59,15 @@ module.exports.retweet = function (id, callback) {
 	});
 };
 
-module.exports.stream = function (track, callback, backup) {
+/**
+ * @param {string[]|string} track
+ * @param {function} callback
+ * @param {number} backup
+ */
+module.exports.stream = function (tracks, callback, backup) {
+	if (typeof tracks === "string") tracks = tracks.split(",");
 	if (!backup) {
-		const stream = client.stream("statuses/filter", { track: track });
+		const stream = client.stream("statuses/filter", { track: tracks.join(",") });
 		stream.on("tweet", tweet => callback(tweet, tweet.user));
 		return stream;
 	} else {
@@ -69,14 +75,19 @@ module.exports.stream = function (track, callback, backup) {
 
 		const already_given = [];
 		const run = () => {
-			client.get("search/tweets", {
-				q: track,
-				result_type: "recent",
-				include_entities: "true",
-				count: Math.floor(backup / 60 * 5)
-			}).then(data => {
-				const stat = data.data.statuses || data.statuses;
-				if (!stat) return;
+			Promise.all(
+				tracks.map(track => client.get("search/tweets", {
+					q: track,
+					result_type: "recent",
+					include_entities: "true",
+					count: Math.floor(backup / 60 * 5)
+				}))
+			).then(data => {
+				let stat = [];
+				data.forEach(d => {
+					if (!(d.data.statuses || d.statuses)) return;
+					stat = stat.concat(d.data.statuses || d.statuses);
+				});
 				stat.forEach(tweet => {
 					if (already_given.includes(tweet.id_str) || (Date.now() - 5 * 60 * 1000) >= new Date(tweet.created_at).getTime()) {
 						already_given.push(tweet.id_str);
@@ -101,12 +112,6 @@ module.exports.stream = function (track, callback, backup) {
 		};
 		return stream;
 	}
-};
-
-module.exports.onfollowed = function (callback) {
-	const stream = client.stream("user");
-	stream.on("follow", callback);
-	return stream;
 };
 
 module.exports.updateBio = function (params, callback) {

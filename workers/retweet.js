@@ -21,8 +21,11 @@ const tweets = database.ref("tweets");
 // Retweet
 const spamFilter = new SpamFilter();
 
+// don't know if this is still needed to prevent feedback loops
+// on normal streams, but I'll just leave it here
 let lastTweet;
-stream("bratwurst", (tweetObj, user) => {
+// forgot to track the plural as well
+stream(["bratwurst", "bratwürste", "bratwursts"], (tweetObj, user) => {
 	if (user.screen_name === botName ||
 		(tweetObj.possibly_sensitive != null ? tweetObj.possibly_sensitive : false)) return;
 	const message = tweetObj.text.toLowerCase();
@@ -36,7 +39,7 @@ stream("bratwurst", (tweetObj, user) => {
 		message.indexOf(" fucking") > -1;
 
 	if (lastTweet === tweetID ||
-		message.indexOf("bratwurst") === -1 ||
+		(message.indexOf("bratwurst") === -1 && message.indexOf("bratwürste") === -1) ||
 		message.indexOf("@" + botName.toLowerCase()) > -1 ||
 		/^rt/.test(message) ||
 		badWords) return;

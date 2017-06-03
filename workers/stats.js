@@ -25,7 +25,6 @@ Date.prototype.getDaysOfMonth = function () {
 /*
  * tweet monthly stats
  */
-
 const month = () => {
 	const time = new Date();
 	stats.charts((bufs, info) => {
@@ -44,11 +43,12 @@ const month = () => {
 			log(string, (string.length + 23 <= 140));
 		});
 	}, ({ buf, user, value }) => {
-		tweet("Top Bratwurst tweeter of the month is @" + user + " with " + value + " tweets. Congratulations!!!", {
+		const string = "Top Bratwurst tweeter of the month is @" + user + " with " + value + " tweets. Congratulations!!!";
+		tweet(string, {
 			media: [buf]
 		}, err => {
 			if (err) return log(err);
-			log("Top Bratwurst tweeter of the month is @" + user + " with " + value + " tweets. Congratulations!!!", "Top Bratwurst tweeter of the month is @" + user + " with " + value + " tweets. Congratulations!!!".length + 23 <= 140 ? "shortened" : "");
+			log(string, string.length + 23 <= 140 ? "shortened" : "");
 		});
 	});
 };
@@ -62,64 +62,63 @@ new cron.CronJob("0 0 1 * *", month, null, true, "Europe/Berlin");
 function dailyReport() {
 	const time = new Date();
 
-	new Promise((resolve, reject) => {
-		// fetch data
-
-		database.ref("tweets").orderByChild("timestamp").startAt(Date.now() - 1000 * 3600 * 24).once("value", tweetsSnap => {
-			if (!tweetsSnap.exists()) return reject();
+	Promise.all([
+		database.ref("tweets").orderByChild("timestamp").startAt(Date.now() - 1000 * 3600 * 24).once("value"),
+		database.ref("ignored").once("value")
+	]).then(([tweetsSnap, ignoredSnap]) => {
+		return new Promise((resolve, reject) => {
+			if (!tweetsSnap.exists()) return reject("No tweets were found.");
 			tweetsSnap = tweetsSnap.val();
 
-			database.ref("ignored").once("value", ignoredSnap => {
-				// new tweet objects will save the User ID instead of the screen_name, to
-				// to go extra sure, but I still have to support screen_name-only entries
-				ignoredSnap = ignoredSnap.val();
-				const ignored = [];
-				Object.keys(ignoredSnap).forEach(key => {
-					ignored.push(key);
-				});
-				const tweets = [];
-				Object.keys(tweetsSnap).forEach(key => {
-					const snap = tweetsSnap[key];
-					tweets.push(snap);
-				});
+			// new tweet objects will save the User ID instead of the screen_name, to
+			// to go extra sure, but I still have to support screen_name-only entries
+			ignoredSnap = ignoredSnap.val();
+			const ignored = [];
+			Object.keys(ignoredSnap).forEach(key => {
+				ignored.push(key);
+			});
+			const tweets = [];
+			Object.keys(tweetsSnap).forEach(key => {
+				const snap = tweetsSnap[key];
+				tweets.push(snap);
+			});
 
-				let users = {};
-				tweets.filter(tweet => {
-					if (!ignored.includes(tweet.user.id))
-						return true;
-					return false;
-				}).forEach(tweet => {
-					const index = tweet.user.id || tweet.user.screen_name;
-					if (users[index]) users[index].length++;
-					else users[index] = {
-						length: 1,
-						id: tweet.user.id,
-						name: tweet.user.screen_name
-					};
-				});
-				users = Object.keys(users).map(key => {
-					return {
-						length: users[key].length,
-						id: users[key].id,
-						name: users[key].name
-					};
-				}).sort((a, b) => {
-					return b.length - a.length;
-				});
+			let users = {};
+			tweets.filter(tweet => {
+				if (!ignored.includes(tweet.user.id))
+					return true;
+				return false;
+			}).forEach(tweet => {
+				const index = tweet.user.id || tweet.user.screen_name;
+				if (users[index]) users[index].length++;
+				else users[index] = {
+					length: 1,
+					id: tweet.user.id,
+					name: tweet.user.screen_name
+				};
+			});
+			users = Object.keys(users).map(key => {
+				return {
+					length: users[key].length,
+					id: users[key].id,
+					name: users[key].name
+				};
+			}).sort((a, b) => {
+				return b.length - a.length;
+			});
 
-				const number = users[0].length;
-				const id = users[0].id;
+			const number = users[0].length;
+			const id = users[0].id;
 
-				if (!users[0].name) return reject();
+			if (!users[0].name) return reject("No best user could be found. Array length 0");
 
-				client.get("users/show", {
-					user_id: id
-				}, (err, data) => {
-					if (err) return reject();
-					resolve({
-						name: data.screen_name,
-						number: number
-					});
+			client.get("users/show", {
+				user_id: id
+			}, (err, data) => {
+				if (err) return reject("Couldn't load user ID");
+				resolve({
+					name: data.screen_name,
+					number: number
 				});
 			});
 		});
@@ -132,8 +131,8 @@ function dailyReport() {
 		tweet(string, function () {
 			log(string);
 		});
-	}).catch(() => {
-		log("Daily Report couldn't be created");
+	}).catch(err => {
+		log("Daily Report couldn't be created. Reason", err);
 	});
 }
 // cron new JOB
@@ -143,7 +142,7 @@ new cron.CronJob("0 0 * * *", dailyReport, null, true, "Europe/Berlin");
  * Update Bio
  */
 function bio() {
-	database.ref("users").once("value", snapshot => {
+	database.ref("users").once("value").then(snapshot => {
 		const text = `About all things Bratwurst. ${snapshot.numChildren()} users have tweeted about bratwurst. "@Bratwurst_bot help" for help. Bot by @LonelessArt. v${require("./../package.json").version}`;
 
 		updateBio({ description: text }, err => {
