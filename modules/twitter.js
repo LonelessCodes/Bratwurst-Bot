@@ -5,7 +5,7 @@ const { EventEmitter } = require("events");
 const Queue = require("./queue");
 const retweet_queue = new Queue();
 
-const client = new Twitter(require("./../keys/twitter.json"));
+const client = new Twitter(require("../keys/twitter.json"));
 
 module.exports.tweet = function (status, options, callback) {
 	const params = {

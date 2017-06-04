@@ -3,7 +3,7 @@ let lastMonthTime;
 let monthName;
 let yearName;
 const Promise = require("promise"),
-	database = require("./../database"),
+	database = require("../database"),
 	canvas = require("./canvas");
 
 /**

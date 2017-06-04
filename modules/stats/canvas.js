@@ -215,7 +215,7 @@ module.exports.global = function global(opts) {
 		// part of the data in this json is from https://github.com/gardaud/worldmap-canvas/blob/master/worldmap.js.
 		// Thanks for providing this point by point data. I went insane when 
 		// parsing SVG path data
-		const map = require("./../../lib/world.json");
+		const map = require("../../lib/world.json");
 
 		ctx.translate(10.5 * r, 0);
 

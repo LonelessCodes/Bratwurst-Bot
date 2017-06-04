@@ -143,7 +143,7 @@ new cron.CronJob("0 0 * * *", dailyReport, null, true, "Europe/Berlin");
  */
 function bio() {
 	database.ref("users").once("value").then(snapshot => {
-		const text = `About all things Bratwurst. ${snapshot.numChildren()} users have tweeted about bratwurst. "@Bratwurst_bot help" for help. Bot by @LonelessArt. v${require("./../package.json").version}`;
+		const text = `About all things Bratwurst. ${snapshot.numChildren()} users have tweeted about bratwurst. "@Bratwurst_bot help" for help. Bot by @LonelessArt. v${require("../package.json").version}`;
 
 		updateBio({ description: text }, err => {
 			if (err) log(err);
