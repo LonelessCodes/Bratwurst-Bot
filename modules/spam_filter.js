@@ -11,15 +11,15 @@ class SpamFilter {
 
 			let send = true;
 			Object.keys(this.timeouts).forEach(key => {
-				if (utils.compare(key, compareString) > 0.9)
+				if (utils.compare(key, compareString) > 0.95)
 					send = false;
 			});
-			if (!send) return reject();
+			if (!send) return reject(new Error("Spamfilter is blocking."));
 
 			clearTimeout(this.timeouts[compareString]);
 			this.timeouts[compareString] = setTimeout(() => {
 				delete this.timeouts[compareString];
-			}, 1000 * 3600 * 2);
+			}, 1000 * 3600);
 
 			resolve();
 		});

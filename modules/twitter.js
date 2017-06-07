@@ -49,13 +49,23 @@ module.exports.tweet = function (status, options, callback) {
 
 module.exports.retweet = function (id, callback) {
 	// Queue the retweeting to reduce the possibility of stupid rate limits kicking in
-	retweet_queue.push(next => {
-		setTimeout(() => {
-			client.post("statuses/retweet/:id", { id: id }, (err, data, response) => {
-				callback(err, data, response);
-				next();
+	if (!callback) {
+		return new Promise((resolve, reject) => {
+			retweet_queue.push(next => {
+				client.post("statuses/retweet/:id", { id }, (err, data) => {
+					if (err) return reject(err);
+					resolve(data);
+					setTimeout(() => next(), 1000);
+				});
 			});
-		}, 1000);
+		});
+	}
+	
+	retweet_queue.push(next => {
+		client.post("statuses/retweet/:id", { id }, (err, data, response) => {
+			callback(err, data, response);
+			setTimeout(() => next(), 1000);
+		});
 	});
 };
 

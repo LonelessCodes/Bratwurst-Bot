@@ -19,12 +19,12 @@ module.exports.isIgnored = function (id, cb) {
 	return new Promise((resolve, reject) => {
 		ignore.once("value", snapshot => {
 			if (snapshot.exists()) {
-				reject();
+				reject(new Error("User ignored."));
 				cb(true);
 			} else {
 				blacklist.once("value", snapshot => {
 					if (snapshot.exists()) {
-						reject();
+						reject(new Error("User on blacklist."));
 						cb(true);
 					} else {
 						resolve();

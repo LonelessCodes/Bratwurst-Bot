@@ -1,6 +1,6 @@
 {
   "name": "bratwurstbot",
-  "version": "3.4.6a",
+  "version": "3.4.7",
   "description": "A bot that retweets all things bratwurst",
   "main": "master.js",
   "dependencies": {

@@ -141,16 +141,23 @@ new cron.CronJob("0 0 * * *", dailyReport, null, true, "Europe/Berlin");
 /**
  * Update Bio
  */
-function bio() {
-	database.ref("users").once("value").then(snapshot => {
-		const text = `About all things Bratwurst. ${snapshot.numChildren()} users have tweeted about bratwurst. "@Bratwurst_bot help" for help. Bot by @LonelessArt. v${require("../package.json").version}`;
+let numUsers = 0;
+database.ref("users").once("value", snapshot => {
+	numUsers = snapshot.numChildren();
 
-		updateBio({ description: text }, err => {
-			if (err) log(err);
-		});
+	bio();
+	setInterval(bio, 1000 * 60 * 30);
+});
+database.ref("users").on("child_added", () => {
+	numUsers++;
+});
+
+function bio() {
+	const text = `About all things Bratwurst. ${numUsers} users have tweeted about bratwurst. "@Bratwurst_bot help" for help. Bot by @LonelessArt. v${require("../package.json").version}`;
+
+	updateBio({ description: text }, err => {
+		if (err) log(err);
 	});
 }
-bio();
-setInterval(bio, 1000 * 60 * 30);
 
 log("Stats worker is listening");

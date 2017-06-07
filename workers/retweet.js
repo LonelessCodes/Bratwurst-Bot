@@ -1,4 +1,4 @@
-const {retweet, stream, botName} = require("../modules/twitter");
+const { retweet, stream, botName } = require("../modules/twitter");
 const database = require("../modules/database");
 const log = require("../modules/log");
 const SpamFilter = require("../modules/spam_filter");
@@ -13,7 +13,7 @@ Array.prototype.min = function () {
 /*
  * Database Objects
  */
-const {User, Tweet} = require("../modules/database_objects");
+const { User, Tweet } = require("../modules/database_objects");
 
 const users = database.ref("users");
 const tweets = database.ref("tweets");
@@ -21,8 +21,6 @@ const tweets = database.ref("tweets");
 // Retweet
 const spamFilter = new SpamFilter();
 
-// don't know if this is still needed to prevent feedback loops
-// on normal streams, but I'll just leave it here
 let lastTweet;
 // forgot to track the plural as well
 stream(["bratwurst", "bratwürste", "bratwursts"], (tweetObj, user) => {
@@ -39,32 +37,29 @@ stream(["bratwurst", "bratwürste", "bratwursts"], (tweetObj, user) => {
 		message.indexOf(" fucking") > -1;
 
 	if (lastTweet === tweetID ||
-		(message.indexOf("bratwurst") === -1 && message.indexOf("bratwürste") === -1) ||
+		!/(bratwurst|bratwürste)/gi.test(message) ||
 		message.indexOf("@" + botName.toLowerCase()) > -1 ||
 		/^rt/.test(message) ||
 		badWords) return;
 
-	Promise.all([
-		database.isIgnored(user.id_str),
-		// check for similar tweets in the last time to prevent spamming
-		spamFilter.check(tweetObj)
-	]).then(() => {
-		return new Promise((resolve, reject) => {
-			// Post Retweet
-			retweet(tweetID, (err, data) => {
-				if (err) return reject(err);
+	Promise
+		.all([
+			database.isIgnored(user.id_str),
+			spamFilter.check(tweetObj) // check for similar tweets in the last time to prevent spamming
+		])
+		.then(() => retweet(tweetID))
+		.then(data => {
+			// prevent a feedback loop. It's a RT, so it should get filtered out, but
+			// just for reference
+			lastTweet = data.id_str;
+			log(`"${tweetObj.text}" by @${user.screen_name} retweeted`);
 
-				lastTweet = data.id_str;
-				log(`"${tweetObj.text}" by @${user.screen_name} retweeted`);
-				resolve();
-			});
+			users.child(user.id_str).set(new User(user));
+			tweets.child(tweetID).set(new Tweet(tweetObj));
+		})
+		.catch(err => {
+			log(`${err.name}: ${err.message} | "${tweetObj.text}" by @${user.screen_name} not retweeted`);
 		});
-	}).then(() => {
-		users.child(user.id_str).set(new User(user), () => { });
-		tweets.child(tweetID).set(new Tweet(tweetObj), () => { });
-	}).catch(err => {
-		log(err || `"${tweetObj.text}" by @${user.screen_name} not retweeted`);
-	});
 }, 60);
 
 log("Retweet worker is listening");
