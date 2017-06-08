@@ -256,6 +256,17 @@ stream.on("follow", function (event) {
 			id: event.source.id_str,
 			name: screenName
 		});
+		
+		// just for me to know when BratwurstBot has more followers than I have
+		client.get("followers/ids", { screen_name: botName, count: 1000 }, (err, data) => {
+			const botNum = data.length;
+			client.get("followers/ids", { screen_name: "LonelessArt", count: 1000 }, (err, data) => {
+				const usrNum = data.length;
+				if(botNum >= usrNum) {
+					tweet("@LonelessArt eingeholt!!!!");
+				}
+			});
+		});
 	}
 });
 stream.on("unfollow", function (event) {
