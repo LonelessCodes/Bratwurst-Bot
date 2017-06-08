@@ -21,14 +21,13 @@ const white = "#FFFFFF";
 stream("#onabratwurst", tweetObject => {
 	try {
 		const start = Date.now();
-
+		
 		const message = tweetObject.text.toLowerCase();
 		const tweetID = tweetObject.id_str;
 		const username = tweetObject.user.screen_name;
 
-		const badWords = message.indexOf("magst du bratwurst") > -1 || message.indexOf(" hate ") > -1 || message.indexOf(" nazi") > -1 || message.indexOf(" nazis") > -1 || message.indexOf(" fucking") > -1;
-
-		if (username === botName || badWords || /^rt/.test(message)) return;
+		// before going any further, check if this is not an echo or a retweet
+		if (username === botName || /^rt/.test(message)) return;
 
 		let text = tweetObject.text.split("\"");
 		// return if there are less than 2 quotation marks
@@ -116,9 +115,9 @@ stream("#onabratwurst", tweetObject => {
 		ctx.fillText("@bratwurst_bot", img.width - te.width - 1 * r, img.height - 1.4 * r);
 
 		const stream = img.jpegStream({
-			bufsize: 4096 // output buffer size in bytes, default: 4096 
-			, quality: 75 // JPEG quality (0-100) default: 75 
-			, progressive: false // true for progressive compression, default: false 
+			bufsize: 4096, // output buffer size in bytes, default: 4096 
+			quality: 75, // JPEG quality (0-100) default: 75 
+			progressive: false // true for progressive compression, default: false 
 		});
 
 		const bufs = [];
@@ -130,7 +129,15 @@ stream("#onabratwurst", tweetObject => {
 			/**
 			 * send it off to the user
 			 */
-			let response = `@${username} "${text}"`;
+			// now continue setting consts
+			const returnValue = ["@" + username];
+
+			tweetObj.entities.user_mentions.forEach(user => {
+				if (user.screen_name !== botName)
+					returnValue.push("@" + user.screen_name);
+			});
+			returnValue.push(`@${username} "${text}"`);
+			const response = returnValue.join(" ");
 			const timestamp = ` [${utils.time(start, Date.now())}]`;
 
 			// handle these 140 characters
