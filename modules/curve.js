@@ -1,3 +1,7 @@
+/**
+ * This is from someones JSbin pen. Can't remember who nor the link. Sorry
+ */
+
 module.exports = function (ctx, text, points) {	
     if (points.length !== 8) return;
     

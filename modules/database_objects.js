@@ -3,7 +3,7 @@ const now = time => {
     else return new Date().getTime();
 };
 
-const {cleanText} = require("../modules/utils");
+const { cleanText } = require("../modules/utils");
 
 class User {
     constructor(user) {
@@ -23,7 +23,7 @@ class Tweet {
 
         // remove urls and hashtags from tweet
         let str = cleanText(tweetObj);
-        
+
         this.text = str;
 
         this.user = {

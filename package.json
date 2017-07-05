@@ -1,6 +1,6 @@
 {
   "name": "bratwurstbot",
-  "version": "3.4.8",
+  "version": "3.4.9a",
   "description": "A bot that retweets all things bratwurst",
   "main": "master.js",
   "dependencies": {
@@ -9,10 +9,12 @@
     "cron": "^1.2.1",
     "firebase-admin": "^4.2.1",
     "gifencoder": "^1.0.6",
-    "promise": "^7.1.1",
     "twit": "^2.2.5"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "babel-eslint": "^7.2.3",
+    "eslint": "^3.19.0"
+  },
   "scripts": {
     "test": "node test.js",
     "start": "node master.js"

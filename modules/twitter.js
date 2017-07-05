@@ -4,6 +4,7 @@ const { roll } = require("./utils");
 const { EventEmitter } = require("events");
 const Queue = require("./queue");
 const retweet_queue = new Queue();
+const { promisify } = require("util");
 
 const client = new Twitter(require("../keys/twitter.json"));
 
@@ -127,6 +128,9 @@ module.exports.stream = function (tracks, callback, backup) {
 module.exports.updateBio = function (params, callback) {
     client.post("account/update_profile", params, callback);
 };
+
+module.exports.get = promisify(client.get);
+module.exports.post = promisify(client.post);
 
 module.exports.client = client;
 

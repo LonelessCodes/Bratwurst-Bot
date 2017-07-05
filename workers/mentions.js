@@ -9,13 +9,6 @@ const now = time => {
     else return Date.now();
 };
 
-Array.prototype.max = function () {
-    return Math.max.apply(null, this);
-};
-Array.prototype.min = function () {
-    return Math.min.apply(null, this);
-};
-
 const reply = {
     replies: {
         invented: [
@@ -249,12 +242,6 @@ stream.on("follow", function (event) {
         if (err) return log(err);
     });
     log("@" + screenName + " followed");
-
-    database.ref("follower").child(Date.now().toString()).set({
-        type: "follow",
-        id: event.source.id_str,
-        name: screenName
-    });
     
     // just for me to know when BratwurstBot has more followers than I have
     client.get("followers/ids", { screen_name: botName, count: 1000 }, (err, data) => {
@@ -265,15 +252,6 @@ stream.on("follow", function (event) {
                 tweet("@LonelessArt eingeholt!!!!");
             }
         });
-    });
-});
-stream.on("unfollow", function (event) {
-    const screenName = event.source.screen_name;
-
-    database.ref("follower").child(Date.now().toString()).set({
-        type: "unfollow",
-        id: event.source.id_str,
-        name: screenName
     });
 });
 

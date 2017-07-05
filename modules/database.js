@@ -1,4 +1,3 @@
-const Promise = require("promise");
 const firebase = require("firebase-admin");
 const key = require("../keys/firebase.json");
 
@@ -11,27 +10,21 @@ firebase.initializeApp({
 const database = firebase.database();
 
 module.exports = database;
-module.exports.isIgnored = function (id, cb) {
+module.exports.isIgnored = async function (id, cb) {
     if (!cb) cb = () => { };
-    
-    const ignore = database.ref("ignored/" + id);
-    const blacklist = database.ref("blacklist/" + id);
-    return new Promise((resolve, reject) => {
-        ignore.once("value", snapshot => {
-            if (snapshot.exists()) {
-                reject(new Error("User ignored."));
-                cb(true);
-            } else {
-                blacklist.once("value", snapshot => {
-                    if (snapshot.exists()) {
-                        reject(new Error("User on blacklist."));
-                        cb(true);
-                    } else {
-                        resolve();
-                        cb(false);
-                    }
-                });
-            }
-        });
-    });
+
+    let snapshot = await database.ref("ignored/" + id).once("value");
+    if (snapshot.exists()) {
+        cb(true);
+        throw new Error("User ignored.");
+    } else {
+        snapshot = await database.ref("blacklist/" + id).once("value");
+        if (snapshot.exists()) {
+            cb(true);
+            throw new Error("User on blacklist.");
+        } else {
+            cb(false);
+            return false;
+        }
+    }
 };

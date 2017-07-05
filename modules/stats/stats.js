@@ -2,8 +2,7 @@ let time;
 let lastMonthTime;
 let monthName;
 let yearName;
-const Promise = require("promise"),
-    database = require("../database"),
+const database = require("../database"),
     canvas = require("./canvas");
 
 /**
@@ -283,33 +282,47 @@ function bestUserFunc(tweets) {
     });
 }
 
-function getTweets(cb) {
+function getTweets() {
     const query = database
         .ref()
         .child("tweets")
         .orderByChild("timestamp")
         .startAt(time.getTime() - (time.getTime().getDaysOfLastMonth() * 24 * 3600 * 1000));
-    query.once("value", cb);
+    return query.once("value");
 }
 
-function createStats(callback, callback2) {
+async function createStats() {
+    // set time of creation begin
     time = new Date();
+    // set month it's all about
     lastMonthTime = new Date(time.getTime() - 1000 * 3600 * 24 * time.getTime().getDaysOfLastMonth());
 
-    monthName = ((time.getMonth() - 1 == -1) ? 12 : (time.getMonth() - 1)).toMonth();
-    yearName = ((time.getMonth() - 1 == -1) ? time.getFullYear() - 1 : time.getFullYear());
+    // set human readable month name
+    monthName = ((time.getMonth() - 1 == -1) ?
+        12 :
+        (time.getMonth() - 1)).toMonth();
+    // set human readable year name
+    yearName = ((time.getMonth() - 1 == -1) ?
+        time.getFullYear() - 1 :
+        time.getFullYear());
 
-    getTweets(tweets => {
-        Promise.all([
-            sourceFunc(tweets),
-            globalFunc(tweets),
-            timesFunc(tweets)
-        ]).then(([
-            { buf: source_buf, best: source_best },
-            { buf: global_buf, best: global_best },
-            { buf: times_buf, best: times_best }
-        ]) => {
-            callback({
+    // get all tweets from last month
+    const tweets = await getTweets();
+
+    // return functions to process this data
+    return {
+        async getStats() {
+            const [
+                { buf: source_buf, best: source_best },
+                { buf: global_buf, best: global_best },
+                { buf: times_buf, best: times_best }
+            ] = await Promise.all([
+                sourceFunc(tweets),
+                globalFunc(tweets),
+                timesFunc(tweets)
+            ]);
+            
+            return [{
                 source: source_buf,
                 global: global_buf,
                 times: times_buf
@@ -317,10 +330,12 @@ function createStats(callback, callback2) {
                 source: source_best,
                 global: global_best,
                 times: times_best
-            });
-            bestUserFunc(tweets).then(callback2).catch(console.log);
-        }).catch(console.log);
-    });
+            }];
+        },
+        async getUser() {
+            return await bestUserFunc(tweets);
+        }
+    };
 }
 
 module.exports = createStats;

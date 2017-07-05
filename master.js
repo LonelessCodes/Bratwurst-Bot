@@ -4,43 +4,45 @@ const path = require("path");
 const log = require("./modules/log");
 const { CronJob } = require("cron");
 
-// prepare
-if (!fs.existsSync("backups/")) fs.mkdirSync("backups/");
-
-const processes = {};
-
-// start workers
-const workers = fs.readdirSync("workers");
-workers.forEach(name => {
-    const child = child_process.fork(`workers/${name}`);
-    child.restartCallback = () => restart(name);
-    child.once("exit", child.restartCallback);
-    processes[name] = child;
-});
-
-function restart(name) {
-    if (name) {
-        doThing(name);
-        return;
+class Worker {
+    /**
+     * Create a new worker
+     * @param {string} file 
+     * @param {boolean} restart 
+     */
+    constructor(file, restart = false) {
+        this.file = file;
+        this.restart = restart;
+        this.restartCallback = () => this.restart();
+        if (restart) setInterval(this.restartCallback, 1000 * 3600 * 6);
     }
 
-    // if no specific process is given, restart all processes that would usually need restarting
-    // (basically everything that has to do with Twitter streaming)
-    // now because I'm always using backup stream systems it's completely unnessesary to restart anything
-    // at all, but just for the record, if I might at any time go back, I'll keep it here
-    ["bratwurst.js", "mentions.js", "retweet.js"].forEach(name => doThing(name));
+    restart() {
+        this.stop();
+        this.start();
+    }
 
-    function doThing(name) {
-        processes[name].removeListener("exit", processes[name].restartCallback);
-        processes[name].kill();
-            
-        const child = child_process.fork(`workers/${name}`);
-        child.restartCallback = () => restart(name);
-        child.once("exit", child.restartCallback);
-        processes[name] = child;
+    start() {
+        this.process = child_process.fork(`workers/${this.file}`);
+        this.process.once("exit", this.restartCallback);
+    }
+
+    stop() {
+        this.process.removeListener("exit", this.restartCallback);
+        this.process.kill();
     }
 }
-setInterval(restart, 1000 * 3600 * 8);
+
+const workers = [
+    new Worker("bratwurst.js", true),
+    new Worker("generate.js"),
+    new Worker("mentions.js", true),
+    new Worker("retweet.js", true),
+    new Worker("stats.js"),
+];
+
+// prepare
+if (!fs.existsSync("backups/")) fs.mkdirSync("backups/");
 
 // create backup
 function backup() {

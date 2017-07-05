@@ -1,4 +1,5 @@
 {
+    "parser": "babel-eslint",
     "env": {
         "node": true,
         "commonjs": true,
@@ -9,6 +10,7 @@
         "sourceType": "module"
     },
     "rules": {
+        "strict": 0,
         "indent": [
             "warn",
             4

@@ -1,4 +1,4 @@
-const {appendFileSync} = require("fs");
+const { appendFileSync } = require("fs");
 const colors = require("colors");
 const logPath = require("path").resolve(__dirname + "/../console.log");
 
