@@ -12,9 +12,9 @@ class Worker {
      */
     constructor(file, restart = false) {
         this.file = file;
-        this.restart = restart;
         this.restartCallback = () => this.restart();
         if (restart) setInterval(this.restartCallback, 1000 * 3600 * 6);
+        this.start();
     }
 
     restart() {
