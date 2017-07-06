@@ -34,6 +34,6 @@ class Tweet {
 }
 
 module.exports = {
-    Tweet: Tweet,
-    User: User
+    Tweet,
+    User
 };

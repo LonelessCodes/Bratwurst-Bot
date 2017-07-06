@@ -1,6 +1,6 @@
 {
   "name": "bratwurstbot",
-  "version": "3.4.9b",
+  "version": "3.4.10",
   "description": "A bot that retweets all things bratwurst",
   "main": "master.js",
   "dependencies": {
@@ -9,6 +9,7 @@
     "cron": "^1.2.1",
     "firebase-admin": "^4.2.1",
     "gifencoder": "^1.0.6",
+    "string-similarity": "^1.2.0",
     "twit": "^2.2.5"
   },
   "devDependencies": {

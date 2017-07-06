@@ -1,26 +1,30 @@
 const utils = require("./utils");
+const stringSimilarity = require("string-similarity");
 
 class SpamFilter {
     constructor() {
-        this.timeouts = {};
+        /**
+         * @type {string[]}
+         */
+        this.timeouts = [];
     }
 
     async check(tweetObj) {
-        const compareString = utils.cleanText(tweetObj).toLowerCase().replace(/ /g, "").replace(/[^a-zA-Z0-9 ]/g, "");
+        const compareString = utils.cleanText(tweetObj).toLowerCase().replace(/[^a-zA-Z0-9 ]/g, "");
 
-        let send = true;
-        Object.keys(this.timeouts).forEach(key => {
-            if (utils.compare(key, compareString) > 0.95)
-                send = false;
-        });
-        if (!send) throw new Error("Spamfilter is blocking.");
+        for (let string of this.timeouts) {
+            console.log(string, "|", compareString, "|", stringSimilarity.compareTwoStrings(string, compareString).toFixed(2));
+            if (stringSimilarity.compareTwoStrings(string, compareString) > 0.95) {
+                throw new Error("Spamfilter is blocking.");
+            }
+        }
 
-        clearTimeout(this.timeouts[compareString]);
-        this.timeouts[compareString] = setTimeout(() => {
-            delete this.timeouts[compareString];
+        this.timeouts.push(compareString);        
+        setTimeout(() => {
+            this.timeouts.splice(this.timeouts.indexOf(compareString), 1);
         }, 1000 * 3600);
 
-        return true;
+        return;
     }
 }
 

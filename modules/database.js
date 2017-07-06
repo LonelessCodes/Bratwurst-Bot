@@ -28,3 +28,7 @@ module.exports.isIgnored = async function (id, cb) {
         }
     }
 };
+
+const { Tweet, User } = require("./database_objects");
+module.exports.Tweet = Tweet;
+module.exports.User = User;
