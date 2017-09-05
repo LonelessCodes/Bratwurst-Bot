@@ -129,7 +129,13 @@ module.exports.updateBio = function (params, callback) {
     client.post("account/update_profile", params, callback);
 };
 
+/**
+ * @type {function(string, {}): Promise}
+ */
 module.exports.get = promisify(client.get);
+/**
+ * @type {function(string, {}): Promise}
+ */
 module.exports.post = promisify(client.post);
 
 module.exports.client = client;

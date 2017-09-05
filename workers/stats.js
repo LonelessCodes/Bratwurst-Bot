@@ -1,9 +1,11 @@
 const twitter = require("../modules/twitter");
-const stats = require("../modules/stats/stats");
+const stats = require("../modules/stats");
 const database = require("../modules/database");
 const utils = require("../modules/utils");
-const cron = require("cron");
 const log = require("../modules/log");
+const cron = require("cron");
+
+// TODO: annual stats
 
 /*
  * tweet monthly stats
@@ -54,12 +56,13 @@ async function month() {
 }
 // cron new JOB
 new cron.CronJob("0 0 1 * *", () => {
-    month().catch(console.log);
+    month().catch(err => log("Monthly stats couldn't be created. Issue:", err));
 }, null, true, "Europe/Berlin");
 
 /**
  * Daily Report
  */
+// TODO: fix issue with multiple being "best user of the day". Not a bug, just a equal chances thing
 
 async function dailyReport() {
     const time = new Date();
@@ -68,23 +71,16 @@ async function dailyReport() {
         database.ref("tweets").orderByChild("timestamp").startAt(Date.now() - 1000 * 3600 * 24).once("value"),
         database.ref("ignored").once("value")
     ]);
-
     if (!tweetsSnap.exists()) throw new Error("No tweets were found.");
+
     tweetsSnap = tweetsSnap.val();
+    ignoredSnap = ignoredSnap.val();
+
+    const ignored = Object.keys(ignoredSnap);
+    const tweets = Object.keys(tweetsSnap).map(key => tweetsSnap[key]);
 
     // new tweet objects will save the User ID instead of the screen_name, to
     // to go extra sure, but I still have to support screen_name-only entries
-    ignoredSnap = ignoredSnap.val();
-    const ignored = [];
-    Object.keys(ignoredSnap).forEach(key => {
-        ignored.push(key);
-    });
-    const tweets = [];
-    Object.keys(tweetsSnap).forEach(key => {
-        const snap = tweetsSnap[key];
-        tweets.push(snap);
-    });
-
     let users = {};
     tweets.filter(tweet => {
         if (!ignored.includes(tweet.user.id))
@@ -99,27 +95,21 @@ async function dailyReport() {
             name: tweet.user.screen_name
         };
     });
-    users = Object.keys(users).map(key => {
-        return {
-            length: users[key].length,
-            id: users[key].id,
-            name: users[key].name
-        };
-    }).sort((a, b) => {
-        return b.length - a.length;
-    });
+    users = Object.keys(users)
+        .map(key => users[key])
+        .sort((a, b) => {
+            return b.length - a.length;
+        }); // get first element
 
-    const number = users[0].length;
-    const id = users[0].id;
-
-    if (!users[0].name) throw new Error("No best user could be found. Array length 0");
-
-    const { screen_name: name } = await twitter.get("users/show", {
-        user_id: id
-    });
+    if (!users[0] || !users[0].name) throw new Error("No best user could be found. Array length 0");
+    
+    const user = users[0];
+    const { screen_name: name } = user.id ? await twitter.get("users/show", {
+        user_id: user.id
+    }) : { screen_name: user.name };
     // tweet data
     let string =
-        `It is once again the end of the day. Top Bratwurst Tweeter of the last 24 hours is @${name} with ${number} ${number === 1 ? "tweet" : "tweets"} 🎉🎆. Congratulations!`;
+        `It is once again the end of the day. Top Bratwurst Tweeter of the last 24 hours is @${name} with ${user.length} ${user.length === 1 ? "tweet" : "tweets"} 🎉🎆. Congratulations!`;
     string += " [" + utils.time(time.getTime(), Date.now()) + "]";
 
     twitter.tweet(string, () => log(string));

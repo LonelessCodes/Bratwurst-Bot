@@ -1,5 +1,5 @@
 const firebase = require("firebase-admin");
-const key = require("../keys/firebase.json");
+const key = require("../../keys/firebase.json");
 
 firebase.initializeApp({
     credential: firebase.credential.cert(key),
@@ -29,6 +29,6 @@ module.exports.isIgnored = async function (id, cb) {
     }
 };
 
-const { Tweet, User } = require("./database_objects");
+const { Tweet, User } = require("./objects");
 module.exports.Tweet = Tweet;
 module.exports.User = User;
