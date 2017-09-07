@@ -106,10 +106,10 @@ stream("#onabratwurst", tweetObject => {
         /**
          * LOWER BANNER
          */
-        ctx.fillStyle = white;
+        ctx.fillStyle = grey;
         ctx.fillRect(0, img.height - 4 * r, img.width, 4 * r);
 
-        ctx.fillStyle = grey;
+        ctx.fillStyle = white;
         ctx.font = `${1.6 * r}px regular`;
         const te = ctx.measureText("@bratwurst_bot");
         ctx.fillText("@bratwurst_bot", img.width - te.width - 1 * r, img.height - 1.4 * r);

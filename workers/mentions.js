@@ -1,4 +1,4 @@
-const {tweet, client, botName, stream: _stream} = require("../modules/twitter");
+const { tweet, client, botName, stream: _stream } = require("../modules/twitter");
 const database = require("../modules/database");
 const utils = require("../modules/utils");
 const log = require("../modules/log");
@@ -242,13 +242,13 @@ stream.on("follow", function (event) {
         if (err) return log(err);
     });
     log("@" + screenName + " followed");
-    
+
     // just for me to know when BratwurstBot has more followers than I have
     client.get("followers/ids", { screen_name: botName, count: 1000 }, (err, data) => {
         const botNum = data.length;
         client.get("followers/ids", { screen_name: "LonelessArt", count: 1000 }, (err, data) => {
             const usrNum = data.length;
-            if(botNum >= usrNum) {
+            if (botNum >= usrNum) {
                 tweet("@LonelessArt eingeholt!!!!");
             }
         });

@@ -6,13 +6,26 @@ const log = require("../modules/log");
 const cron = require("cron");
 
 // TODO: annual stats
+/*
+ * tweet monthly stats
+ */
+async function year() {
+    // // load tweets
+    // const getStats = await stats.year();
+    // // create stats and diagrams
+    // const [bufs, info] = await getStats.getStats();
+}
+// cron new JOB
+new cron.CronJob("0 0 1 0 *", () => {
+    year().catch(err => log("Annual stats couldn't be created. Issue:", err));
+}, null, true, "Europe/Berlin");
 
 /*
  * tweet monthly stats
  */
 async function month() {
     // load tweets
-    const getStats = await stats();
+    const getStats = await stats.month();
     // create stats and diagrams
     const [bufs, info] = await getStats.getStats();
     // create a tweet text
