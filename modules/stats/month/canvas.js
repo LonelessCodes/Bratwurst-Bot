@@ -6,19 +6,12 @@ try {
 }
 const GIF = require("gifencoder");
 
-// const path = require("path");
-
 const grey = "#4D4D4D";
 const grey2 = "#4C4C4C";
 const orange = "#FFC04D";
 // const orange2 = "#F2A74C";
 const green = "#78C07D";
 const white = "#FFFFFF";
-
-// Cairo on Raspi has got problems with custom fonts I discovered, so I'm commenting them 
-// until that's fixed
-// const comfortaa_r = new Canvas.Font("regular_font", path.join(__dirname, "..", "..", "lib", "fonts", "Comfortaa-Regular.ttf"));
-// const comfortaa_b = new Canvas.Font("bold_font", path.join(__dirname, "..", "..", "lib", "fonts", "Comfortaa-Bold.ttf"));
 
 const r = 20.48;
 
@@ -27,23 +20,26 @@ const r = 20.48;
  */
 module.exports.times = function times(opts) {
     try {
-        const img = new Canvas(Math.floor(100 * r), Math.floor(70 * r));
+        const height = 70;
+        const width = 100;
+        const img = new Canvas(Math.floor(width * r), Math.floor(height * r));
         const ctx = img.getContext("2d");
-        // ctx.addFont(comfortaa_r);
-        // ctx.addFont(comfortaa_b);
+
+        // just use percentage later on. That's easier. So we have to scale the matrix first
+        ctx.scale(r, r);
 
         /**
          * BACKGROUND
          */
         ctx.fillStyle = white;
-        ctx.fillRect(0, 0, img.width, img.height);
+        ctx.fillRect(0, 0, width, height);
 
         /**
          * HEADER
          */
         ctx.fillStyle = grey;
-        ctx.font = `bold ${4.3 * r}px regular`;
-        ctx.fillText(`Bratwurst Stats of ${opts.monthName}, ${opts.yearName}`, 4 * r, 8 * r);
+        ctx.font = `bold ${4.3}px regular`;
+        ctx.fillText(`Bratwurst Stats of ${opts.monthName}, ${opts.yearName}`, 4, 8);
 
         const piece = Math.PI * 2 / 12;
         /**
@@ -54,39 +50,39 @@ module.exports.times = function times(opts) {
         ctx.fillStyle = orange;
         for (let i = 0; i < opts.times.length; i++) {
             ctx.beginPath();
-            ctx.moveTo(22 * r, 30 * r);
+            ctx.moveTo(22, 30);
             const time = opts.times[i] / opts.maxTime;
             let angle = piece * i - Math.PI / 2;
             if (angle < 0) angle += Math.PI * 2;
-            ctx.arc(22 * r, 30 * r, (time * 13 + 6) * r, angle, angle + piece);
+            ctx.arc(22, 30, time * 13 + 6, angle, angle + piece);
             ctx.globalAlpha = time;
             ctx.fill();
         }
 
         ctx.beginPath();
         ctx.fillStyle = white;
-        ctx.arc(22 * r, 30 * r, 6 * r, 0, Math.PI * 2);
+        ctx.arc(22, 30, 6, 0, Math.PI * 2);
         ctx.fill();
         ctx.restore();
 
         // legend **************
-        const legend1 = ctx.createLinearGradient(0, 14 * r, 0, (35 + 14) * r);
+        const legend1 = ctx.createLinearGradient(0, 14, 0, 35 + 14);
         legend1.addColorStop(0, orange);
         legend1.addColorStop(1, white);
 
         ctx.fillStyle = legend1;
-        ctx.fillRect(44 * r, 14.5 * r, 4 * r, 34.5 * r);
+        ctx.fillRect(44, 14.5, 4, 34.5);
         // zero
         ctx.fillStyle = grey;
-        ctx.font = `${2.8 * r}px regular`;
-        ctx.fillText("0", 46 * r - ctx.measureText("0").width / 2, 50.5 * r);
+        ctx.font = `${2.8}px regular`;
+        ctx.fillText("0", 46 - ctx.measureText("0").width / 2, 50.5);
         // max
         let text = Math.round(opts.maxTime).toString();
-        ctx.fillText(text, 46 * r - ctx.measureText(text).width / 2, 14 * r);
+        ctx.fillText(text, 46 - ctx.measureText(text).width / 2, 14);
 
         ctx.beginPath();
         ctx.fillStyle = white;
-        ctx.arc(22 * r, 30 * r, 6 * r, 0, Math.PI * 2);
+        ctx.arc(22, 30, 6, 0, Math.PI * 2);
         ctx.fill();
 
         /**
@@ -98,11 +94,11 @@ module.exports.times = function times(opts) {
         ctx.fillStyle = green;
         for (let i = 0; i < opts.months.length; i++) {
             ctx.beginPath();
-            ctx.moveTo(img.width - 22 * r, 30 * r);
+            ctx.moveTo(width - 22, 30);
             const month = opts.months[i] / opts.maxMonth;
             let angle = piece * i - Math.PI / 2;
             if (angle < 0) angle += Math.PI * 2;
-            ctx.arc(img.width - 22 * r, 30 * r, (month * 13 + 6) * r, angle, angle + piece);
+            ctx.arc(width - 22, 30, month * 13 + 6, angle, angle + piece);
             ctx.globalAlpha = month;
             ctx.fill();
         }
@@ -110,29 +106,29 @@ module.exports.times = function times(opts) {
 
         ctx.beginPath();
         ctx.fillStyle = white;
-        ctx.arc(img.width - 22 * r, 30 * r, 6 * r, 0, Math.PI * 2);
+        ctx.arc(width - 22, 30, 6, 0, Math.PI * 2);
         ctx.fill();
 
         // legend *************
-        const legend2 = ctx.createLinearGradient(0, 14 * r, 0, (35 + 14) * r);
+        const legend2 = ctx.createLinearGradient(0, 14, 0, (35 + 14));
         legend2.addColorStop(0, green);
         legend2.addColorStop(1, white);
 
         ctx.fillStyle = legend2;
-        ctx.fillRect(img.width - 48 * r, 14.5 * r, 4 * r, 34.5 * r);
+        ctx.fillRect(width - 48, 14.5, 4, 34.5);
         // zero
         ctx.fillStyle = grey;
-        ctx.font = `${2.8 * r}px regular`;
-        ctx.fillText("0", (img.width - 46 * r) - ctx.measureText("0").width / 2, 50.5 * r);
+        ctx.font = `${2.8}px regular`;
+        ctx.fillText("0", width - 46 - ctx.measureText("0").width / 2, 50.5);
         // max
         text = Math.round(opts.maxMonth).toString();
-        ctx.fillText(text, (img.width - 46 * r) - ctx.measureText(text).width / 2, 14 * r);
+        ctx.fillText(text, width - 46 - ctx.measureText(text).width / 2, 14);
 
         /**
          * PIE TEXT
          */
         ctx.fillStyle = grey;
-        ctx.font = `${1.2 * r}px regular`;
+        ctx.font = `${1.2}px regular`;
         // daytime
         for (let i = 0; i < 12; i++) {
             ctx.beginPath();
@@ -141,8 +137,7 @@ module.exports.times = function times(opts) {
             const x = radius * Math.cos(angle) + 22;
             const y = radius * Math.sin(angle) + 30 + .6;
             const text = (i * 2).toString();
-            const tw = ctx.measureText(text);
-            ctx.fillText(text, x * r - tw.width / 2, y * r);
+            ctx.fillText(text, x - ctx.measureText(text).width / 2, y);
         }
         // months
         const monthsShort = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -150,38 +145,39 @@ module.exports.times = function times(opts) {
             ctx.beginPath();
             const radius = 6 - 1.2;
             const angle = i * piece + piece / 2 - Math.PI / 2;
-            const x = radius * Math.cos(angle) + (img.width / r - 22);
+            const x = radius * Math.cos(angle) + (width - 22);
             const y = radius * Math.sin(angle) + 30 + .6;
             const text = monthsShort[i];
-            const tw = ctx.measureText(text);
-            ctx.fillText(text, x * r - tw.width / 2, y * r);
+            ctx.fillText(text, x - ctx.measureText(text).width / 2, y);
         }
 
         /**
          * BANNER
          */
+        const offsetY = 53;
+
         ctx.fillStyle = green;
-        ctx.fillRect(0, 53 * r, img.width, img.height - 53 * r);
+        ctx.fillRect(0, offsetY, width, height - offsetY);
 
         ctx.fillStyle = white;
-        ctx.font = `${2.6 * r}px regular`;
-        ctx.fillText("Average Bratwurst activity", 4 * r, (53 + 5) * r);
-        ctx.fillText("by hours", 4 * r, (53 + 5 + 4.5) * r, 36 * r);
+        ctx.font = `${2.6}px regular`;
+        ctx.fillText("Average Bratwurst activity", 4, offsetY + 5);
+        ctx.fillText("by hours", 4, offsetY + 5 + 4.5, 36);
 
-        ctx.fillText("Daily average Bratwurst", 59 * r, (53 + 5) * r);
-        ctx.fillText("activity per month", 59 * r, (53 + 5 + 4.5) * r);
+        ctx.fillText("Daily average Bratwurst", 59, offsetY + 5);
+        ctx.fillText("activity per month", 59, offsetY + 5 + 4.5);
 
         /**
          * LOWER BANNER
          */
         ctx.fillStyle = grey;
-        ctx.fillRect(0, img.height - 4 * r, img.width, 4 * r);
+        ctx.fillRect(0, height - 4, width, 4);
 
         ctx.fillStyle = white;
-        ctx.font = `${1.6 * r}px regular`;
+        ctx.font = `${1.6}px regular`;
         const te = ctx.measureText("@bratwurst_bot");
-        ctx.fillText("@bratwurst_bot", img.width - te.width - 1 * r, img.height - 1.4 * r);
-        ctx.fillText(`generated in ${Date.now() - opts.renderTime}ms`, 1 * r, img.height - 1.4 * r);
+        ctx.fillText("@bratwurst_bot", width - te.width - 1, height - 1.4);
+        ctx.fillText(`generated in ${Date.now() - opts.renderTime}ms`, 1, height - 1.4);
 
         return img.toBuffer();
     } catch (err) {
@@ -194,30 +190,31 @@ module.exports.times = function times(opts) {
  */
 module.exports.global = function global(opts) {
     try {
-        const img = new Canvas(Math.floor(106 * r), Math.floor(65 * r));
+        const width = 106;
+        const height = 65;
+        const img = new Canvas(Math.floor(width * r), Math.floor(height * r));
         const ctx = img.getContext("2d");
 
-        // ctx.addFont(comfortaa_r);
-        // ctx.addFont(comfortaa_b);
+        ctx.scale(r, r);
 
         /**
          * BACKGROUND
          */
         ctx.fillStyle = grey2;
-        ctx.fillRect(0, 0, img.width, img.height);
+        ctx.fillRect(0, 0, width, height);
 
         /**
          * MAP
          */
         ctx.save();
         ctx.strokeStyle = grey2;
-        ctx.lineWidth = r * 0.05;
+        ctx.lineWidth = 0.05;
         // part of the data in this json is from https://github.com/gardaud/worldmap-canvas/blob/master/worldmap.js.
         // Thanks for providing this point by point data. I went insane when 
         // parsing SVG path data
-        const map = require("../../lib/world.json");
+        const map = require("../../../lib/world.json");
 
-        ctx.translate(10.5 * r, 0);
+        ctx.translate(10.5, 0);
 
         // draw "plain" countries
         Object.keys(map).forEach(code => {
@@ -237,21 +234,21 @@ module.exports.global = function global(opts) {
          * LEGEND
          */
         ctx.save();
-        ctx.translate(img.width - 7 * r, 12 * r);
-        const h = 31 * r;
+        ctx.translate(width - 7, 12);
+        const h = 31;
         const legend2 = ctx.createLinearGradient(0, 0, 0, h);
         legend2.addColorStop(0, orange);
         legend2.addColorStop(1, white);
 
         ctx.fillStyle = legend2;
-        ctx.fillRect(0, 0, 3 * r, h);
+        ctx.fillRect(0, 0, 3, h);
         // zero
         ctx.fillStyle = white;
-        ctx.font = `${2.5 * r}px regular`;
-        ctx.fillText("0", 1.5 * r - ctx.measureText("0").width / 2, h + 3 * r);
+        ctx.font = `${2.5}px regular`;
+        ctx.fillText("0", 1.5 - ctx.measureText("0").width / 2, h + 3);
         // max
         let text = Math.round(opts.max).toString();
-        ctx.fillText(text, 1.5 * r - ctx.measureText(text).width / 2, -r);
+        ctx.fillText(text, 1.5 - ctx.measureText(text).width / 2, -1);
         ctx.restore();
 
         /**
@@ -259,12 +256,12 @@ module.exports.global = function global(opts) {
          */
         ctx.save();
         const radius = 10;
-        ctx.translate(r * (5.5 + radius), r * (31 + radius));
+        ctx.translate(5.5 + radius, 31 + radius);
 
         ctx.strokeStyle = grey2;
-        ctx.lineWidth = r * 0.05;
+        ctx.lineWidth = 0.05;
         ctx.beginPath();
-        // ctx.arc(0, 0, radius * r, 0, Math.PI * 2);
+        // ctx.arc(0, 0, radius, 0, Math.PI * 2);
 
         let total = 0;
         const sorted = Object.keys(opts.data).map(key => {
@@ -281,7 +278,7 @@ module.exports.global = function global(opts) {
             ctx.beginPath();
 
             ctx.moveTo(0, 0);
-            ctx.arc(0, 0, radius * r,
+            ctx.arc(0, 0, radius,
                 progress * digit - Math.PI / 2,
                 (sorted[i].value + progress) * digit - Math.PI / 2);
 
@@ -290,18 +287,18 @@ module.exports.global = function global(opts) {
 
             if (sorted[i].value / total > .03) {
 
-                ctx.font = `bold ${2 * r}px regular`;
+                ctx.font = `bold ${2}px regular`;
                 ctx.fillStyle = grey2;
                 const angle = (progress + sorted[i].value / 2) * digit - Math.PI / 2;
                 const w = ctx.measureText(sorted[i].id).width;
                 if (sorted[i].value / total > .2) {
                     ctx.fillText(sorted[i].id,
-                        radius / 2 * Math.cos(angle) * r - w / 2,
-                        radius / 2 * Math.sin(angle) * r + r * 0.8);
+                        radius / 2 * Math.cos(angle) - w / 2,
+                        radius / 2 * Math.sin(angle) + 0.8);
                 } else {
                     ctx.fillText(sorted[i].id,
-                        radius / 1.7 * Math.cos(angle) * r - w / 2,
-                        radius / 1.7 * Math.sin(angle) * r + r * 0.8);
+                        radius / 1.7 * Math.cos(angle) - w / 2,
+                        radius / 1.7 * Math.sin(angle) + 0.8);
                 }
             }
 
@@ -314,24 +311,24 @@ module.exports.global = function global(opts) {
          * HEADER
          */
         ctx.fillStyle = white;
-        ctx.font = `bold ${3 * r}px regular`;
+        ctx.font = `bold ${3}px regular`;
         text = `Number of Bratwurst tweets with geo tag sent in ${opts.monthName}, ${opts.yearName} by country`;
         const m = ctx.measureText(text);
-        if (m.width > (img.width - 8 * r))
-            ctx.font = `bold ${3 * r * ((img.width - 8 * r) / m.width)}px regular`;
-        ctx.fillText(text, 4 * r, 57 * r);
+        if (m.width > (width - 8))
+            ctx.font = `bold ${3 * ((width - 8) / m.width)}px regular`;
+        ctx.fillText(text, 4, 57);
 
         /**
          * LOWER BANNER
          */
         ctx.fillStyle = white;
-        ctx.fillRect(0, img.height - 4 * r, img.width, 4 * r);
+        ctx.fillRect(0, height - 4, width, 4);
 
         ctx.fillStyle = grey2;
-        ctx.font = `${1.6 * r}px regular`;
+        ctx.font = `${1.6}px regular`;
         const te = ctx.measureText("@bratwurst_bot");
-        ctx.fillText("@bratwurst_bot", img.width - te.width - 1 * r, img.height - 1.4 * r);
-        ctx.fillText(`generated in ${Date.now() - opts.renderTime}ms`, 1 * r, img.height - 1.4 * r);
+        ctx.fillText("@bratwurst_bot", width - te.width - 1, height - 1.4);
+        ctx.fillText(`generated in ${Date.now() - opts.renderTime}ms`, 1, height - 1.4);
 
         return img.toBuffer();
     } catch (err) {
@@ -342,7 +339,7 @@ module.exports.global = function global(opts) {
 // private draw function
 function Draw(ctx, code, map) {
     const p = map[code].path;
-    const iRatio = r * 0.01065 * 0.85;
+    const iRatio = 0.01065 * 0.85;
 
     ctx.beginPath();
 
@@ -380,11 +377,12 @@ function Draw(ctx, code, map) {
  */
 module.exports.source = function source(opts) {
     try {
-        const img = new Canvas(Math.floor(100 * r), Math.floor(100 * r));
+        const width = 100;
+        const height = 100;
+        const img = new Canvas(Math.floor(width * r), Math.floor(height * r));
         const ctx = img.getContext("2d");
 
-        // ctx.addFont(comfortaa_r);
-        // ctx.addFont(comfortaa_b);
+        ctx.scale(r, r);
 
         let text = "";
 
@@ -392,13 +390,13 @@ module.exports.source = function source(opts) {
          * BACKGROUND
          */
         ctx.fillStyle = grey2;
-        ctx.fillRect(0, 0, img.width, img.height);
+        ctx.fillRect(0, 0, width, height);
 
         /**
          * BOX
          */
         ctx.save();
-        ctx.translate(4 * r, 4 * r);
+        ctx.translate(4, 4);
 
         const h = 79;
         let total = 0;
@@ -411,25 +409,25 @@ module.exports.source = function source(opts) {
 
             ctx.fillStyle = white;
             ctx.beginPath();
-            const y = (progress / total) * h * r;
-            const height = Math.max(1, percent * h * r - 0.2 * r);
-            ctx.rect(0, y, 60 * r, height);
+            const y = (progress / total) * h;
+            const height = Math.max(1, percent * h - 0.2);
+            ctx.rect(0, y, 60, height);
             ctx.fill();
 
-            if (height > 2 * r) {
-                const f = Math.min(4 * r, height - 0.5 * r);
+            if (height > 2) {
+                const f = Math.min(4, height - 0.5);
                 ctx.font = `bold ${f}px regular`;
                 ctx.fillStyle = green;
                 const text = (percent * 100).toFixed(1) + "%";
                 const w = ctx.measureText(text).width;
-                ctx.fillText(text, 30 * r - w / 2, y + height / 2 + f / 2.6);
+                ctx.fillText(text, 30 - w / 2, y + height / 2 + f / 2.6);
             }
 
-            if (height > 1.2 * r) {
-                const f = Math.min(3.5 * r, height);
+            if (height > 1.2) {
+                const f = Math.min(3.5, height);
                 ctx.font = `bold ${f}px regular`;
                 ctx.fillStyle = white;
-                ctx.fillText(opts.data[i].name, 63 * r, y + height / 2 + f / 2.6);
+                ctx.fillText(opts.data[i].name, 63, y + height / 2 + f / 2.6);
             }
 
             progress += opts.data[i].value;
@@ -440,27 +438,27 @@ module.exports.source = function source(opts) {
          * HEADER
          */
         ctx.fillStyle = green;
-        ctx.fillRect(0, 86 * r, img.width, 10 * r);
+        ctx.fillRect(0, 86, width, 10);
 
         ctx.fillStyle = white;
-        ctx.font = `bold ${3 * r}px regular`;
+        ctx.font = `bold ${3}px regular`;
         text = `Most used apps to tweet about Bratwursts in ${opts.monthName}, ${opts.yearName}`;
         const m = ctx.measureText(text);
-        if (m.width > (img.width - 8 * r))
-            ctx.font = `bold ${3 * r * ((img.width - 8 * r) / m.width)}px regular`;
-        ctx.fillText(text, 4 * r, 92 * r);
+        if (m.width > (width - 8))
+            ctx.font = `bold ${3 * ((width - 8) / m.width)}px regular`;
+        ctx.fillText(text, 4, 92);
 
         /**
          * LOWER BANNER
          */
         ctx.fillStyle = white;
-        ctx.fillRect(0, img.height - 4 * r, img.width, 4 * r);
+        ctx.fillRect(0, height - 4, width, 4);
 
         ctx.fillStyle = grey2;
-        ctx.font = `${1.6 * r}px regular`;
+        ctx.font = `${1.6}px regular`;
         const te = ctx.measureText("@bratwurst_bot");
-        ctx.fillText("@bratwurst_bot", img.width - te.width - 1 * r, img.height - 1.4 * r);
-        ctx.fillText(`generated in ${Date.now() - opts.renderTime}ms`, 1 * r, img.height - 1.4 * r);
+        ctx.fillText("@bratwurst_bot", width - te.width - 1, height - 1.4);
+        ctx.fillText(`generated in ${Date.now() - opts.renderTime}ms`, 1, height - 1.4);
 
         return img.toBuffer();
     } catch (err) {
@@ -477,13 +475,15 @@ function randomRange(v0, v1) {
 
 module.exports.user = function user(opts) {
     try {
+        const r = 6.4;
+        
         class Vector {
             constructor(x, y) {
                 this.x = x;
                 this.y = y;
             }
         }
-        const g = 0.15;
+        const g = 0.15 /r;
         class Particle extends Vector {
             constructor(x, y, vx, vy, color) {
                 super(x, y);
@@ -522,39 +522,38 @@ module.exports.user = function user(opts) {
                 // than scale
                 ctx.scale(Math.cos(this.rot2) * 0.2 + 0.8, Math.cos(this.rot) * 0.2 + 0.8); // squish it to 2/3 vertical size
 
-                ctx.fillRect(0, 0, 12 * r, 12 * r);
+                ctx.fillRect(0, 0, 12, 12);
                 ctx.restore();
             }
         }
 
         // good stuff
-        const width = 640;
-        const height = 360;
-        const r = width / 100;
+        const width = 100; // 640px
+        const height = 56.25; // 360px
 
-        const encoder = new GIF(width, height);
+        const encoder = new GIF(width * r, height * r);
 
         encoder.start();
         encoder.setRepeat(0);   // 0 for repeat, -1 for no-repeat 
         encoder.setDelay(40);  // frame delay in ms 
         encoder.setQuality(10); // image quality. 10 is default. 
 
-        const img = new Canvas(width, height);
+        const img = new Canvas(width * r, height * r);
         const ctx = img.getContext("2d");
-
-        // ctx.addFont(comfortaa_b);
 
         const colors = ["#FF83FC", "#FF83FC", "#FF7659", "#FF7659", "#BEFF50", "#4DFFC5", "#54A6FF", "#54A6FF"];
 
         const particles = new Array(20).fill(null).map(() => new Particle(
-            randomRange(-50, -40), randomRange(-20, 20),
-            randomRange(0, 20), randomRange(-10, 5),
+            randomRange(-50, -40) /r, randomRange(-20, 20)/r,
+            randomRange(0, 20)/r, randomRange(-10, 5)/r,
             colors[Math.floor(Math.random() * colors.length)]
         )).concat(new Array(20).fill(null).map(() => new Particle(
-            randomRange(width + 40, width + 50), randomRange(-20, 20),
-            randomRange(-20, 0), randomRange(-10, 5),
+            randomRange(width + 40/r, width + 50/r), randomRange(-20, 20)/r,
+            randomRange(-20, 0)/r, randomRange(-10, 5)/r,
             colors[Math.floor(Math.random() * colors.length)]
         )));
+        
+        ctx.scale(r, r);
 
         for (let frame = 0; frame < 70; frame++) {
             console.log(frame);
@@ -563,7 +562,7 @@ module.exports.user = function user(opts) {
              * BACKGROUND
             */
             ctx.fillStyle = white;
-            ctx.fillRect(0, 0, img.width, img.height);
+            ctx.fillRect(0, 0, width, height);
 
             /**
              * PARTICLES
@@ -578,31 +577,31 @@ module.exports.user = function user(opts) {
              * TEXT
              */
             ctx.fillStyle = grey;
-            ctx.font = `bold ${8 * r}px regular`;
+            ctx.font = `bold ${8}px regular`;
             const text = "@" + opts.user;
             const m = ctx.measureText(text);
-            if (m.width > width - 8 * r) {
-                const mult = (width - 8 * r) / m.width;
-                ctx.font = `bold ${8 * r * mult}px regular`;
+            if (m.width > width - 8) {
+                const mult = (width - 8) / m.width;
+                ctx.font = `bold ${8 * mult}px regular`;
                 m.width *= mult;
             }
             ctx.fillText(
                 "@" + opts.user,
                 width / 2 - m.width / 2,
-                (height - 4 * r) / 2 + 8 / 3 * r
+                (height - 4) / 2 + 8 / 3
             );
 
             /**
              * LOWER BANNER
              */
             ctx.fillStyle = grey;
-            ctx.fillRect(0, height - 4 * r, width, 4 * r);
+            ctx.fillRect(0, height - 4, width, 4);
 
             ctx.fillStyle = white;
-            ctx.font = `${1.6 * r}px regular`;
+            ctx.font = `${1.6}px regular`;
             const te = ctx.measureText("@bratwurst_bot");
-            ctx.fillText("@bratwurst_bot", width - te.width - 1 * r, height - 1.4 * r);
-
+            ctx.fillText("@bratwurst_bot", width - te.width - 1, height - 1.4);
+            
             encoder.addFrame(ctx);
         }
 
