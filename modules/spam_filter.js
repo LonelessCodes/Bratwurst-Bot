@@ -14,7 +14,7 @@ class SpamFilter {
 
         for (let string of this.strings) {
             console.log(string, "|", compareString, "|", compareTwoStrings(string, compareString).toFixed(2));
-            if (compareTwoStrings(string, compareString) > 0.95) {
+            if (compareTwoStrings(string, compareString) > 0.9) {
                 throw new Error("Spamfilter is blocking.");
             }
         }
