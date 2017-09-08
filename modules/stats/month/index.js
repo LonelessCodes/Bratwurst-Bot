@@ -256,11 +256,6 @@ async function bestUserFunc(tweets) {
     const user = usersArray[0].name;
     const value = usersArray[0].value;
 
-    "import bpy\n" +
-    "bpy.data.objects['Best'].data.body = \"@" + user + "\"\n" +
-    "bpy.data.objects['Right'].particle_systems['ParticleSystem'].seed = " + Math.floor(Math.random() * 1000) + "\n" +
-    "bpy.data.objects['Left'].particle_systems['ParticleSystem'].seed = " + Math.floor(Math.random() * 1000);
-
     const buf = canvas.user({
         user
     });
