@@ -31,6 +31,10 @@ stream(["bratwurst", "bratwürste", "bratwursts"], (tweetObj, user) => {
     database
         .isIgnored(user.id_str)
         .then(() => spamFilter.check(tweetObj)) // check for similar tweets in the last time to prevent spamming
+        .then(() => (new Promise(resolve => {
+            log("spam filter passed through");
+            resolve();
+        })))
         .then(() => retweet(tweetID))
         .then(() => {
             log(`"${tweetObj.text}" by @${user.screen_name} retweeted`);
