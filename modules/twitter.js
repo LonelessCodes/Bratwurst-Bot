@@ -54,9 +54,9 @@ module.exports.retweet = function (id, callback) {
         return new Promise((resolve, reject) => {
             retweet_queue.push(next => {
                 client.post("statuses/retweet/:id", { id }, (err, data) => {
+                    setTimeout(() => next(), 1000);
                     if (err) return reject(err);
                     resolve(data);
-                    setTimeout(() => next(), 1000);
                 });
             });
         });
