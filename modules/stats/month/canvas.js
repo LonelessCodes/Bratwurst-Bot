@@ -4,12 +4,16 @@ try {
 } catch (err) {
     Canvas = require("canvas-prebuilt");
 }
+const fs = require("fs");
+const path = require("path");
+const Font = require("../../font");
 const GIF = require("gifencoder");
+
+const palette = require("../palette.json");
 
 const grey = "#4D4D4D";
 const grey2 = "#4C4C4C";
 const orange = "#FFC04D";
-// const orange2 = "#F2A74C";
 const green = "#78C07D";
 const white = "#FFFFFF";
 
@@ -261,7 +265,6 @@ module.exports.global = function global(opts) {
         ctx.strokeStyle = grey2;
         ctx.lineWidth = 0.05;
         ctx.beginPath();
-        // ctx.arc(0, 0, radius, 0, Math.PI * 2);
 
         let total = 0;
         const sorted = Object.keys(opts.data).map(key => {
@@ -466,142 +469,65 @@ module.exports.source = function source(opts) {
     }
 };
 
+const bratwurst = new Font(path.join(__dirname, "..", "..", "..", "images", "font", "bratwurst.json"));
+
 /**
  * BEST USER
  */
-function randomRange(v0, v1) {
-    return Math.random() * (v1 - v0) + v0;
-}
-
-module.exports.user = function user(opts) {
+module.exports.user = function user(name) {
     try {
-        const r = 6.4;
-        
-        class Vector {
-            constructor(x, y) {
-                this.x = x;
-                this.y = y;
-            }
-        }
-        const g = 0.15 /r;
-        class Particle extends Vector {
-            constructor(x, y, vx, vy, color) {
-                super(x, y);
-                this.origx = x;
-                this.origy = y;
-                this.origvx = vx;
-                this.origvy = vy;
-                this.color = color;
-                this.rot = Math.random() * 2 * Math.PI;
-                this.rot2 = Math.random() * 2 * Math.PI;
-                this.reset();
-            }
-
-            reset() {
-                this.x = this.origx;
-                this.y = this.origy;
-                this.vx = this.origvx;
-                this.vy = this.origvy;
-                this.g = g;
-            }
-
-            update() {
-                this.g += g / 2;
-                this.vy += this.g;
-                this.x += this.vx;
-                this.y += this.vy;
-            }
-
-            render(ctx) {
-                ctx.fillStyle = this.color;
-                ctx.save();
-                // rotation first
-                ctx.translate(this.x, this.y);
-                ctx.rotate(this.rot);
-
-                // than scale
-                ctx.scale(Math.cos(this.rot2) * 0.2 + 0.8, Math.cos(this.rot) * 0.2 + 0.8); // squish it to 2/3 vertical size
-
-                ctx.fillRect(0, 0, 12, 12);
-                ctx.restore();
-            }
-        }
-
         // good stuff
-        const width = 100; // 640px
-        const height = 56.25; // 360px
+        const width = 640; // 640px
+        const height = 360; // 360px
 
-        const encoder = new GIF(width * r, height * r);
+        const encoder = new GIF(width, height);
 
         encoder.start();
         encoder.setRepeat(0);   // 0 for repeat, -1 for no-repeat 
-        encoder.setDelay(40);  // frame delay in ms 
+        encoder.setDelay(300);  // frame delay in ms 
         encoder.setQuality(10); // image quality. 10 is default. 
 
-        const img = new Canvas(width * r, height * r);
+        const img = new Canvas(width, height);
         const ctx = img.getContext("2d");
 
-        const colors = ["#FF83FC", "#FF83FC", "#FF7659", "#FF7659", "#BEFF50", "#4DFFC5", "#54A6FF", "#54A6FF"];
-
-        const particles = new Array(20).fill(null).map(() => new Particle(
-            randomRange(-50, -40) /r, randomRange(-20, 20)/r,
-            randomRange(0, 20)/r, randomRange(-10, 5)/r,
-            colors[Math.floor(Math.random() * colors.length)]
-        )).concat(new Array(20).fill(null).map(() => new Particle(
-            randomRange(width + 40/r, width + 50/r), randomRange(-20, 20)/r,
-            randomRange(-20, 0)/r, randomRange(-10, 5)/r,
-            colors[Math.floor(Math.random() * colors.length)]
-        )));
+        const text = bratwurst.text("@" + name, { spacing: 25, color: palette.red });
+        const textsub = bratwurst.text("Month's favorite", { spacing: 20, color: palette.orange });
         
-        ctx.scale(r, r);
+        for (let frame = 0; frame < 4; frame++) {
+            const background = new Canvas.Image;
+            background.src = fs.readFileSync(path.resolve(path.join(__dirname, "..", "..", "..", "images", "stats", "user_month_frame_" + frame + ".png")));
+            ctx.drawImage(background, 0, 0);
 
-        for (let frame = 0; frame < 70; frame++) {
-            console.log(frame);
+            // month's favourite label
+            ctx.drawImage(textsub, (width - textsub.width / 6) / 2, 10, textsub.width / 6, textsub.height / 6);
 
-            /**
-             * BACKGROUND
-            */
-            ctx.fillStyle = white;
-            ctx.fillRect(0, 0, width, height);
-
-            /**
-             * PARTICLES
-             */
-            for (let i = 0; i < particles.length; i++) {
-                const vec = particles[i];
-                vec.update();
-                vec.render(ctx);
+            // username
+            ctx.save();
+            ctx.translate(width / 2, height / 2);
+            ctx.rotate(-Math.PI / 20 + (frame < 2 ? 0.3 : 0));
+            let iwidth = text.width / 2;
+            let iheight = text.height / 2;
+            if (iwidth > width) {
+                iheight = iheight * (width / iwidth);
+                iwidth = width;
             }
-
-            /**
-             * TEXT
-             */
-            ctx.fillStyle = grey;
-            ctx.font = `bold ${8}px regular`;
-            const text = "@" + opts.user;
-            const m = ctx.measureText(text);
-            if (m.width > width - 8) {
-                const mult = (width - 8) / m.width;
-                ctx.font = `bold ${8 * mult}px regular`;
-                m.width *= mult;
-            }
-            ctx.fillText(
-                "@" + opts.user,
-                width / 2 - m.width / 2,
-                (height - 4) / 2 + 8 / 3
-            );
-
+            ctx.drawImage(text, -iwidth / 2, -iheight / 2, iwidth, iheight);
+            ctx.restore();
+            
             /**
              * LOWER BANNER
              */
-            ctx.fillStyle = grey;
-            ctx.fillRect(0, height - 4, width, 4);
-
+            ctx.save();
+            ctx.scale(6, 6);
+            ctx.fillStyle = palette.dark;
+            ctx.fillRect(0, height / 6 - 3, width / 6, 3);
+    
             ctx.fillStyle = white;
-            ctx.font = `${1.6}px regular`;
+            ctx.font = `${1.6}px bold`;
             const te = ctx.measureText("@bratwurst_bot");
-            ctx.fillText("@bratwurst_bot", width - te.width - 1, height - 1.4);
-            
+            ctx.fillText("@bratwurst_bot", width / 6 - te.width - 1, height / 6 - 1);
+            ctx.restore();
+
             encoder.addFrame(ctx);
         }
 
