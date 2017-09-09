@@ -9,6 +9,8 @@ const now = time => {
     else return Date.now();
 };
 
+// TODO: give the user a full view at their statistics when requested. With charts and stuff
+
 const reply = {
     replies: {
         invented: [
@@ -28,7 +30,6 @@ const reply = {
             "Bratwürste gibt es in roher und gebrühter Form, wobei die gebrühte Form verbreiteter ist."
         ],
         follow: [
-            // "Thanks for the follow! Following gives you special Bratwurst priorities. \"@" + botName + " help\" for more bot information.",
             "Thanks for the follow, {{name}}! 🎉 \"@" + botName + " help\" for more bot information."
         ]
     },
@@ -168,7 +169,6 @@ _stream("@" + botName, function (tweetObj) {
                 const index = Math.floor(Math.random() * images.length);
 
                 returnValue.push("Have a bite");
-                returnValue.push(`[${utils.time(start, now())}]`);
                 tweet(returnValue.join(" "), {
                     media: ["images/bratwursts/" + images[index]],
                     inReplyTo: tweetID
@@ -242,17 +242,6 @@ stream.on("follow", function (event) {
         if (err) return log(err);
     });
     log("@" + screenName + " followed");
-
-    // just for me to know when BratwurstBot has more followers than I have
-    client.get("followers/ids", { screen_name: botName, count: 1000 }, (err, data) => {
-        const botNum = data.length;
-        client.get("followers/ids", { screen_name: "LonelessArt", count: 1000 }, (err, data) => {
-            const usrNum = data.length;
-            if (botNum >= usrNum) {
-                tweet("@LonelessArt eingeholt!!!!");
-            }
-        });
-    });
 });
 
 // catch stream errors

@@ -98,6 +98,5 @@ module.exports = function (ctx, text, points) {
         //linear bezier curve plotter; used recursivly in the quadratic bezier curve calculation
         this.x = ((1 - t) * (1 - t) * startX) + (2 * (1 - t) * t * control1X) + (t * t * control2X);
         this.y = ((1 - t) * (1 - t) * startY) + (2 * (1 - t) * t * control1Y) + (t * t * control2Y);
-
     }
 };

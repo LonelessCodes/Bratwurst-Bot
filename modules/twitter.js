@@ -47,6 +47,7 @@ module.exports.tweet = function (status, options, callback) {
         client.post("statuses/update", params, options);
     }
 };
+module.exports.tweetPromise = promisify(module.exports.tweet);
 
 module.exports.retweet = function (id, callback) {
     // Queue the retweeting to reduce the possibility of stupid rate limits kicking in

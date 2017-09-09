@@ -2,8 +2,9 @@ let time;
 let lastMonthTime;
 let monthName;
 let yearName;
-const database = require("../database"),
-    canvas = require("./canvas");
+const database = require("../../database"),
+    canvas = require("./canvas"),
+    bestUser = require("../best_user");
 
 /**
  * fixes
@@ -15,13 +16,6 @@ Array.prototype.min = function () {
     return Math.min.apply(null, this);
 };
 
-Number.prototype.toZeros = function () {
-    if (this < 100) {
-        if (this < 10) return "00" + this;
-        return "0" + this;
-    }
-    return "" + this;
-};
 Number.prototype.getHour = function () {
     var a = new Date(this);
     return a.getHours();
@@ -191,7 +185,7 @@ async function timesFunc(tweets) {
         return b.value - a.value;
     })[0];
 
-    return { buf, best: reversed ? reversed.name : null };
+    return { buf, best: reversed ? parseInt(reversed.name) : null };
 }
 
 /**
@@ -231,49 +225,13 @@ async function globalFunc(tweets) {
     return { buf, best: finalArray[0] };
 }
 
-/**
- * BEST USER
- */
-async function bestUserFunc(tweets) {
-    // TODO: sort best user by id_str. Get username via Twitter API 
-    // (to make sure user is @ even if they changed their usename)
-    const users = {};
-    tweets.forEach(tweet => {
-        const thing = tweet.child("user/screen_name").val();
-        users[thing] ? users[thing]++ : users[thing] = 1;
-    });
-
-    const usersArray = Object.keys(users).map(key => {
-        return {
-            value: users[key],
-            name: key
-        };
-    }).sort(function (a, b) {
-        return b.value - a.value;
-    });
-    if (!usersArray[0]) throw new Error("No best user could be found. Array length 0");
-
-    const user = usersArray[0].name;
-    const value = usersArray[0].value;
-
-    const buf = canvas.user({
-        user
-    });
-    if (buf instanceof Error || !buf) throw buf;
-
-    return {
-        buf,
-        user,
-        value
-    };
-}
-
 function getTweets() {
     const query = database
         .ref()
         .child("tweets")
         .orderByChild("timestamp")
-        .startAt(time.getTime() - (time.getTime().getDaysOfLastMonth() * 24 * 3600 * 1000));
+        .startAt(time.getTime() - (time.getTime().getDaysOfLastMonth() * 24 * 3600 * 1000))
+        .endAt(time.getTime());
     return query.once("value");
 }
 
@@ -319,7 +277,7 @@ async function createStats() {
             }];
         },
         getUser() {
-            return bestUserFunc(tweets);
+            return bestUser("month", tweets);
         }
     };
 }

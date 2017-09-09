@@ -1,7 +1,6 @@
 /**
  * interface for sprite sheet based font drawing
  */
-
 const fs = require("fs");
 const path = require("path");
 let Canvas;

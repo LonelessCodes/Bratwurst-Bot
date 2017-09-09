@@ -4,12 +4,6 @@ try {
 } catch (err) {
     Canvas = require("canvas-prebuilt");
 }
-const fs = require("fs");
-const path = require("path");
-const Font = require("../../font");
-const GIF = require("gifencoder");
-
-const palette = require("../palette.json");
 
 const grey = "#4D4D4D";
 const grey2 = "#4C4C4C";
@@ -464,76 +458,6 @@ module.exports.source = function source(opts) {
         ctx.fillText(`generated in ${Date.now() - opts.renderTime}ms`, 1, height - 1.4);
 
         return img.toBuffer();
-    } catch (err) {
-        return err;
-    }
-};
-
-const bratwurst = new Font(path.join(__dirname, "..", "..", "..", "images", "font", "bratwurst.json"));
-
-/**
- * BEST USER
- */
-module.exports.user = function user(name) {
-    try {
-        // good stuff
-        const width = 640; // 640px
-        const height = 360; // 360px
-
-        const encoder = new GIF(width, height);
-
-        encoder.start();
-        encoder.setRepeat(0);   // 0 for repeat, -1 for no-repeat 
-        encoder.setDelay(300);  // frame delay in ms 
-        encoder.setQuality(10); // image quality. 10 is default. 
-
-        const img = new Canvas(width, height);
-        const ctx = img.getContext("2d");
-
-        const text = bratwurst.text("@" + name, { spacing: 25, color: palette.red });
-        const textsub = bratwurst.text("Month's favorite", { spacing: 20, color: palette.orange });
-        
-        for (let frame = 0; frame < 4; frame++) {
-            const background = new Canvas.Image;
-            background.src = fs.readFileSync(path.resolve(path.join(__dirname, "..", "..", "..", "images", "stats", "user_month_frame_" + frame + ".png")));
-            ctx.drawImage(background, 0, 0);
-
-            // month's favourite label
-            ctx.drawImage(textsub, (width - textsub.width / 6) / 2, 10, textsub.width / 6, textsub.height / 6);
-
-            // username
-            ctx.save();
-            ctx.translate(width / 2, height / 2);
-            ctx.rotate(-Math.PI / 20 + (frame < 2 ? 0.3 : 0));
-            let iwidth = text.width / 2;
-            let iheight = text.height / 2;
-            if (iwidth > width) {
-                iheight = iheight * (width / iwidth);
-                iwidth = width;
-            }
-            ctx.drawImage(text, -iwidth / 2, -iheight / 2, iwidth, iheight);
-            ctx.restore();
-            
-            /**
-             * LOWER BANNER
-             */
-            ctx.save();
-            ctx.scale(6, 6);
-            ctx.fillStyle = palette.dark;
-            ctx.fillRect(0, height / 6 - 3, width / 6, 3);
-    
-            ctx.fillStyle = white;
-            ctx.font = `${1.6}px bold`;
-            const te = ctx.measureText("@bratwurst_bot");
-            ctx.fillText("@bratwurst_bot", width / 6 - te.width - 1, height / 6 - 1);
-            ctx.restore();
-
-            encoder.addFrame(ctx);
-        }
-
-        encoder.finish();
-
-        return encoder.out.getData();
     } catch (err) {
         return err;
     }

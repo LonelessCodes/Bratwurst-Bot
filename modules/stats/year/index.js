@@ -1,9 +1,8 @@
 let time;
-let lastMonthTime;
-let monthName;
 let yearName;
-const database = require("../database"),
-    canvas = require("./canvas");
+const database = require("../../database"),
+    canvas = require("./canvas"),
+    bestUser = require("../best_user");
 
 /**
  * fixes
@@ -67,16 +66,6 @@ Number.prototype.toMonth = function () {
     return this;
 };
 
-Number.prototype.getDaysOfLastMonth = function () {
-    var time = new Date(this);
-    var year = time.getFullYear();
-    var month = time.getMonth();
-    if (month == 0) {
-        month = 12;
-        year = year - 1;
-    }
-    return new Date(year, month, 0).getDate();
-};
 Number.prototype.getDaysOfMonth = function () {
     var a = new Date(this);
     var year = a.getFullYear();
@@ -84,54 +73,33 @@ Number.prototype.getDaysOfMonth = function () {
     return new Date(year, month, 0).getDate();
 };
 
-// async functions
+
 
 function getTweets() {
+    const year = new Date(time.getTime());
+    year.setMonth(-1);
+    year.setMonth(1);
+    yearName = year.getFullYear();
+    const days = year.getTime().getDaysOfMonth() === 28 ? 365 : 366;
+
     const query = database
         .ref()
         .child("tweets")
         .orderByChild("timestamp")
-        // get days of year
-        .startAt(time.getTime() - (time.getTime().getDaysOfLastMonth() * 24 * 3600 * 1000));
+        .startAt(time.getTime() - (days * 24 * 3600 * 1000))
+        .endAt(time.getTime());
     return query.once("value");
 }
 
 async function createStats() {
     // set time of creation begin
     time = new Date();
-    // set human readable year name
-    yearName = ((time.getMonth() - 1 == -1) ?
-        time.getFullYear() - 1 :
-        time.getFullYear());
-
     // get all tweets from last month
     const tweets = await getTweets();
-
     // return functions to process this data
     return {
-        async getStats() {
-            const [
-                { buf: source_buf, best: source_best },
-                { buf: global_buf, best: global_best },
-                { buf: times_buf, best: times_best }
-            ] = await Promise.all([
-                sourceFunc(tweets),
-                globalFunc(tweets),
-                timesFunc(tweets)
-            ]);
-            
-            return [{
-                source: source_buf,
-                global: global_buf,
-                times: times_buf
-            }, {
-                source: source_best,
-                global: global_best,
-                times: times_best
-            }];
-        },
         getUser() {
-            return bestUserFunc(tweets);
+            return bestUser("year", tweets);
         }
     };
 }
