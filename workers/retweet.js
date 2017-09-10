@@ -20,7 +20,7 @@ stream(["bratwurst", "bratwürste", "bratwursts"], (tweetObj, user) => {
         message.indexOf("magst du bratwurst") > -1 ||
         message.indexOf("disgusting") > -1 ||
         message.indexOf(" hate ") > -1 ||
-        message.indexOf(" nazi") > -1 ||
+        message.indexOf("nazi") > -1 ||
         message.indexOf(" fucking") > -1;
 
     if (!/(bratwurst|bratwürste)/gi.test(message) ||

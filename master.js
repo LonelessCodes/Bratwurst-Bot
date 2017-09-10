@@ -33,12 +33,21 @@ class Worker {
     }
 }
 
+// const workers = [
+//     new Worker("bratwurst.js", true),
+//     new Worker("generate.js"),
+//     new Worker("mentions.js", true),
+//     new Worker("retweet.js", true),
+//     new Worker("stats.js"),
+// ];
+// Bratwurst Bot is having many many problems right now, and I can't figure out why.
+// This down here is just to test what the heck is going on
 const workers = [
-    new Worker("bratwurst.js", true),
+    new Worker("bratwurst.js"),
     new Worker("generate.js"),
-    new Worker("mentions.js", true),
-    new Worker("retweet.js", true),
-    new Worker("stats.js"),
+    new Worker("mentions.js"),
+    new Worker("retweet.js"),
+    new Worker("stats.js")
 ];
 
 // prepare

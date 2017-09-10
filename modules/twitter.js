@@ -47,6 +47,7 @@ module.exports.tweet = function (status, options, callback) {
         client.post("statuses/update", params, options);
     }
 };
+module.exports.tweetPromise = promisify(module.exports.tweet);
 
 module.exports.retweet = function (id, callback) {
     // Queue the retweeting to reduce the possibility of stupid rate limits kicking in
@@ -54,9 +55,9 @@ module.exports.retweet = function (id, callback) {
         return new Promise((resolve, reject) => {
             retweet_queue.push(next => {
                 client.post("statuses/retweet/:id", { id }, (err, data) => {
+                    setTimeout(() => next(), 1000);
                     if (err) return reject(err);
                     resolve(data);
-                    setTimeout(() => next(), 1000);
                 });
             });
         });
@@ -129,7 +130,13 @@ module.exports.updateBio = function (params, callback) {
     client.post("account/update_profile", params, callback);
 };
 
+/**
+ * @type {function(string, {}): Promise}
+ */
 module.exports.get = promisify(client.get);
+/**
+ * @type {function(string, {}): Promise}
+ */
 module.exports.post = promisify(client.post);
 
 module.exports.client = client;

@@ -1,0 +1,14 @@
+{
+    "orange": "#f46036",
+    "dark": "#2e294e",
+    "red": "#e71d36",
+    "blue": "#006daa",
+    "yellow": "#c5d86d",
+    "palette2": {
+        "dark": "#1f2041",
+        "purple": "#4b3f72",
+        "yellow": "#ffc857", 
+        "green": "#119da4", 
+        "red": "#e56399"
+    }
+}

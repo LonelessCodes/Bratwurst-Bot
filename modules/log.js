@@ -33,7 +33,7 @@ function convert(messages) {
     let string = "";
     for (let i = 0; i < messages.length; i++) {
         const elem = messages[i];
-        if (elem && typeof elem !== "undefined") {
+        if (elem !== void 0) {
             switch (typeof elem) {
             case "string":
                 string += elem;

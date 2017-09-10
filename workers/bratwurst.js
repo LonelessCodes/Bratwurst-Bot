@@ -14,10 +14,6 @@ try {
 const grey = "#4C4C4C";
 const white = "#FFFFFF";
 
-// same as in /modules/stats/canvas.js
-// const font = new Canvas.Font("daniel", path.join(__dirname, "..", "lib", "fonts", "danielbd.ttf"));
-// const comfortaa_r = new Canvas.Font("regular", path.join(__dirname, "..", "lib", "fonts", "Comfortaa-Regular.ttf"));
-
 stream("#onabratwurst", tweetObject => {
     try {
         const start = Date.now();
@@ -37,13 +33,16 @@ stream("#onabratwurst", tweetObject => {
         /**
          * Now draw
          */
-        const width = 3072 / 2 - 420;
-        const height = 2048 / 2 - 340;
+        let width = 3072 / 2 - 420;
+        let height = 2048 / 2 - 340;
         const r = width / 100;
         const img = new Canvas(width, height);
         const ctx = img.getContext("2d");
+        
+        width /= r;
+        height /= r;
 
-        // ctx.addFont(comfortaa_r);
+        ctx.scale(r, r);
 
         ctx.save();
         ctx.translate(-300, -200);
@@ -57,8 +56,6 @@ stream("#onabratwurst", tweetObject => {
          */
         const overlay = new Canvas(width, height);
         const overctx = overlay.getContext("2d");
-
-        // overctx.addFont(font);
 
         overctx.save();
         overctx.translate(-300, -200);
@@ -106,13 +103,13 @@ stream("#onabratwurst", tweetObject => {
         /**
          * LOWER BANNER
          */
-        ctx.fillStyle = white;
-        ctx.fillRect(0, img.height - 4 * r, img.width, 4 * r);
-
         ctx.fillStyle = grey;
-        ctx.font = `${1.6 * r}px regular`;
+        ctx.fillRect(0, height - 4, width, 4);
+
+        ctx.fillStyle = white;
+        ctx.font = `${1.6}px regular`;
         const te = ctx.measureText("@bratwurst_bot");
-        ctx.fillText("@bratwurst_bot", img.width - te.width - 1 * r, img.height - 1.4 * r);
+        ctx.fillText("@bratwurst_bot", width - te.width - 1, height - 1.4);
 
         const stream = img.jpegStream({
             bufsize: 4096, // output buffer size in bytes, default: 4096 
