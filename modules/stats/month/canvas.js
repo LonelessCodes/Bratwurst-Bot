@@ -5,11 +5,13 @@ try {
     Canvas = require("canvas-prebuilt");
 }
 
-const grey = "#4D4D4D";
-const grey2 = "#4C4C4C";
-const orange = "#FFC04D";
-const green = "#78C07D";
-const white = "#FFFFFF";
+const {
+    dark,
+    purple,
+    yellow,
+    green,
+    white
+} = require("../palette.json");
 
 const r = 20.48;
 
@@ -35,7 +37,7 @@ module.exports.times = function times(opts) {
         /**
          * HEADER
          */
-        ctx.fillStyle = grey;
+        ctx.fillStyle = dark;
         ctx.font = `bold ${4.3}px regular`;
         ctx.fillText(`Bratwurst Stats of ${opts.monthName}, ${opts.yearName}`, 4, 8);
 
@@ -45,7 +47,7 @@ module.exports.times = function times(opts) {
          */
         // pie *****************
         ctx.save();
-        ctx.fillStyle = orange;
+        ctx.fillStyle = yellow;
         for (let i = 0; i < opts.times.length; i++) {
             ctx.beginPath();
             ctx.moveTo(22, 30);
@@ -65,13 +67,13 @@ module.exports.times = function times(opts) {
 
         // legend **************
         const legend1 = ctx.createLinearGradient(0, 14, 0, 35 + 14);
-        legend1.addColorStop(0, orange);
+        legend1.addColorStop(0, yellow);
         legend1.addColorStop(1, white);
 
         ctx.fillStyle = legend1;
         ctx.fillRect(44, 14.5, 4, 34.5);
         // zero
-        ctx.fillStyle = grey;
+        ctx.fillStyle = dark;
         ctx.font = `${2.8}px regular`;
         ctx.fillText("0", 46 - ctx.measureText("0").width / 2, 50.5);
         // max
@@ -115,7 +117,7 @@ module.exports.times = function times(opts) {
         ctx.fillStyle = legend2;
         ctx.fillRect(width - 48, 14.5, 4, 34.5);
         // zero
-        ctx.fillStyle = grey;
+        ctx.fillStyle = dark;
         ctx.font = `${2.8}px regular`;
         ctx.fillText("0", width - 46 - ctx.measureText("0").width / 2, 50.5);
         // max
@@ -125,7 +127,7 @@ module.exports.times = function times(opts) {
         /**
          * PIE TEXT
          */
-        ctx.fillStyle = grey;
+        ctx.fillStyle = dark;
         ctx.font = `${1.2}px regular`;
         // daytime
         for (let i = 0; i < 12; i++) {
@@ -133,7 +135,7 @@ module.exports.times = function times(opts) {
             const radius = 6 - 1.2;
             const angle = i * piece - Math.PI / 2;
             const x = radius * Math.cos(angle) + 22;
-            const y = radius * Math.sin(angle) + 30 + .6;
+            const y = radius * Math.sin(angle) + 30 + .5;
             const text = (i * 2).toString();
             ctx.fillText(text, x - ctx.measureText(text).width / 2, y);
         }
@@ -144,7 +146,7 @@ module.exports.times = function times(opts) {
             const radius = 6 - 1.2;
             const angle = i * piece + piece / 2 - Math.PI / 2;
             const x = radius * Math.cos(angle) + (width - 22);
-            const y = radius * Math.sin(angle) + 30 + .6;
+            const y = radius * Math.sin(angle) + 30 + .5;
             const text = monthsShort[i];
             ctx.fillText(text, x - ctx.measureText(text).width / 2, y);
         }
@@ -160,7 +162,7 @@ module.exports.times = function times(opts) {
         ctx.fillStyle = white;
         ctx.font = `${2.6}px regular`;
         ctx.fillText("Average Bratwurst activity", 4, offsetY + 5);
-        ctx.fillText("by hours", 4, offsetY + 5 + 4.5, 36);
+        ctx.fillText("per hour", 4, offsetY + 5 + 4.5, 36);
 
         ctx.fillText("Daily average Bratwurst", 59, offsetY + 5);
         ctx.fillText("activity per month", 59, offsetY + 5 + 4.5);
@@ -168,7 +170,7 @@ module.exports.times = function times(opts) {
         /**
          * LOWER BANNER
          */
-        ctx.fillStyle = grey;
+        ctx.fillStyle = dark;
         ctx.fillRect(0, height - 4, width, 4);
 
         ctx.fillStyle = white;
@@ -198,14 +200,14 @@ module.exports.global = function global(opts) {
         /**
          * BACKGROUND
          */
-        ctx.fillStyle = grey2;
+        ctx.fillStyle = purple;
         ctx.fillRect(0, 0, width, height);
 
         /**
          * MAP
          */
         ctx.save();
-        ctx.strokeStyle = grey2;
+        ctx.strokeStyle = purple;
         ctx.lineWidth = 0.05;
         // part of the data in this json is from https://github.com/gardaud/worldmap-canvas/blob/master/worldmap.js.
         // Thanks for providing this point by point data. I went insane when 
@@ -218,7 +220,7 @@ module.exports.global = function global(opts) {
         Object.keys(map).forEach(code => {
             if (map[code].path) {
                 if (opts.data[code]) {
-                    ctx.fillStyle = mix(white, orange, opts.data[code] / opts.max);
+                    ctx.fillStyle = mix(white, yellow, opts.data[code] / opts.max);
                 } else {
                     ctx.fillStyle = white;
                 }
@@ -235,8 +237,13 @@ module.exports.global = function global(opts) {
         ctx.translate(width - 7, 12);
         const h = 31;
         const legend2 = ctx.createLinearGradient(0, 0, 0, h);
-        legend2.addColorStop(0, orange);
+        legend2.addColorStop(0, yellow);
         legend2.addColorStop(1, white);
+
+        ctx.fillStyle = dark;
+        ctx.globalAlpha = 0.3;
+        ctx.fillRect(-.5, -.5, 4, h + 1);
+        ctx.globalAlpha = 1;
 
         ctx.fillStyle = legend2;
         ctx.fillRect(0, 0, 3, h);
@@ -256,7 +263,14 @@ module.exports.global = function global(opts) {
         const radius = 10;
         ctx.translate(5.5 + radius, 31 + radius);
 
-        ctx.strokeStyle = grey2;
+        ctx.beginPath();
+        ctx.fillStyle = dark;
+        ctx.globalAlpha = 0.3;
+        ctx.arc(0, 0, radius + .5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalAlpha = 1;
+
+        ctx.strokeStyle = purple;
         ctx.lineWidth = 0.05;
         ctx.beginPath();
 
@@ -285,7 +299,7 @@ module.exports.global = function global(opts) {
             if (sorted[i].value / total > .03) {
 
                 ctx.font = `bold ${2}px regular`;
-                ctx.fillStyle = grey2;
+                ctx.fillStyle = purple;
                 const angle = (progress + sorted[i].value / 2) * digit - Math.PI / 2;
                 const w = ctx.measureText(sorted[i].id).width;
                 if (sorted[i].value / total > .2) {
@@ -321,7 +335,7 @@ module.exports.global = function global(opts) {
         ctx.fillStyle = white;
         ctx.fillRect(0, height - 4, width, 4);
 
-        ctx.fillStyle = grey2;
+        ctx.fillStyle = purple;
         ctx.font = `${1.6}px regular`;
         const te = ctx.measureText("@bratwurst_bot");
         ctx.fillText("@bratwurst_bot", width - te.width - 1, height - 1.4);
@@ -386,7 +400,7 @@ module.exports.source = function source(opts) {
         /**
          * BACKGROUND
          */
-        ctx.fillStyle = grey2;
+        ctx.fillStyle = purple;
         ctx.fillRect(0, 0, width, height);
 
         /**
@@ -399,7 +413,7 @@ module.exports.source = function source(opts) {
         let total = 0;
         opts.data.forEach(e => total += e.value);
 
-        ctx.strokeStyle = grey;
+        ctx.strokeStyle = dark;
         let progress = 0;
         for (let i = 0; i < opts.data.length; i++) {
             const percent = opts.data[i].value / total;
@@ -451,7 +465,7 @@ module.exports.source = function source(opts) {
         ctx.fillStyle = white;
         ctx.fillRect(0, height - 4, width, 4);
 
-        ctx.fillStyle = grey2;
+        ctx.fillStyle = purple;
         ctx.font = `${1.6}px regular`;
         const te = ctx.measureText("@bratwurst_bot");
         ctx.fillText("@bratwurst_bot", width - te.width - 1, height - 1.4);
@@ -486,8 +500,8 @@ function mix(c1, c2, v) {
     c1 = hexToRgb(c1);
     c2 = hexToRgb(c2);
     return rgbToHex(
-        Math.round(255 - (c1.r - c2.r) * v),
-        Math.round(255 - (c1.g - c2.g) * v),
-        Math.round(255 - (c1.b - c2.b) * v)
+        Math.round(c1.r - (c1.r - c2.r) * v),
+        Math.round(c1.g - (c1.g - c2.g) * v),
+        Math.round(c1.b - (c1.b - c2.b) * v)
     );
 }

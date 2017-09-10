@@ -24,6 +24,7 @@ stream(["bratwurst", "bratwürste", "bratwursts"], (tweetObj, user) => {
         message.indexOf(" fucking") > -1;
 
     if (!/(bratwurst|bratwürste)/gi.test(message) ||
+        /bot spotting/gi.test(user.name) || // to filter out this annoying collective of bot accounts "Bot Spotting"
         message.indexOf("@" + botName.toLowerCase()) > -1 ||
         /^rt/.test(message) ||
         badWords) return;

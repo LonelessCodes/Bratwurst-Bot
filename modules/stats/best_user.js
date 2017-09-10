@@ -10,7 +10,6 @@ const Font = require("../font");
 const GIF = require("gifencoder");
 
 const palette = require("./palette.json");
-const white = "#FFFFFF";
 
 const bratwurst = new Font(path.join(__dirname, "..", "..", "images", "font", "bratwurst.json"));
 
@@ -33,10 +32,13 @@ function canvas(time, name) {
         const img = new Canvas(width, height);
         const ctx = img.getContext("2d");
 
-        const text = bratwurst.text("@" + name, { spacing: 25, color: palette.red });
-        const textsub = bratwurst.text(time + "'s favorite", { spacing: 20, color: palette.orange });
+        const textsub = bratwurst.text(time + "'s favorite", { spacing: 20, color: palette.yellow });
+        const text = bratwurst.text("@" + name, { spacing: 20, color: palette.green });
 
         for (let frame = 0; frame < 4; frame++) {
+            ctx.fillStyle = palette.white;
+            ctx.fillRect(0, 0, width, height);
+
             const background = new Canvas.Image;
             background.src = fs.readFileSync(path.resolve(path.join(__dirname, "..", "..", "images", "stats", "user_" + time + "_frame_" + frame + ".png")));
             ctx.drawImage(background, 0, 0);
@@ -61,14 +63,14 @@ function canvas(time, name) {
              * LOWER BANNER
              */
             ctx.save();
-            ctx.scale(6, 6);
-            ctx.fillStyle = palette.dark;
-            ctx.fillRect(0, height / 6 - 3, width / 6, 3);
+            ctx.scale(7, 7);
+            ctx.fillStyle = palette.purple;
+            ctx.fillRect(0, height / 7 - 3, width / 7, 3);
 
-            ctx.fillStyle = white;
+            ctx.fillStyle = palette.white;
             ctx.font = `${1.6}px bold`;
             const te = ctx.measureText("@bratwurst_bot");
-            ctx.fillText("@bratwurst_bot", width / 6 - te.width - 1, height / 6 - 1);
+            ctx.fillText("@bratwurst_bot", width / 7 - te.width - 1, height / 7 - 1);
             ctx.restore();
 
             encoder.addFrame(ctx);

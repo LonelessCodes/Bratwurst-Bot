@@ -11,8 +11,8 @@ try {
 } catch (err) {
     Canvas = require("canvas-prebuilt");
 }
-const grey = "#4C4C4C";
-const white = "#FFFFFF";
+const palette = require("../modules/stats/palette.json");
+const grey = "#5B4A3E";
 
 stream("#onabratwurst", tweetObject => {
     try {
@@ -39,10 +39,10 @@ stream("#onabratwurst", tweetObject => {
         const img = new Canvas(width, height);
         const ctx = img.getContext("2d");
         
-        width /= r;
-        height /= r;
+        // width /= r;
+        // height /= r;
 
-        ctx.scale(r, r);
+        // ctx.scale(r, r);
 
         ctx.save();
         ctx.translate(-300, -200);
@@ -104,12 +104,12 @@ stream("#onabratwurst", tweetObject => {
          * LOWER BANNER
          */
         ctx.fillStyle = grey;
-        ctx.fillRect(0, height - 4, width, 4);
+        ctx.fillRect(0, height - 4*r, width, 4*r);
 
-        ctx.fillStyle = white;
-        ctx.font = `${1.6}px regular`;
+        ctx.fillStyle = palette.white;
+        ctx.font = `${1.6*r}px regular`;
         const te = ctx.measureText("@bratwurst_bot");
-        ctx.fillText("@bratwurst_bot", width - te.width - 1, height - 1.4);
+        ctx.fillText("@bratwurst_bot", width - te.width - 1*r, height - 1.4*r);
 
         const stream = img.jpegStream({
             bufsize: 4096, // output buffer size in bytes, default: 4096 
