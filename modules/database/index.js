@@ -30,6 +30,24 @@ if (!global.database) {
             }
         }
     };
+    module.exports.isIgnoredNoThrow = async function (id, cb) {
+        if (!cb) cb = () => { };
+    
+        let snapshot = await database.ref("ignored/" + id).once("value");
+        if (snapshot.exists()) {
+            cb(true);
+            return true;
+        } else {
+            snapshot = await database.ref("blacklist/" + id).once("value");
+            if (snapshot.exists()) {
+                cb(true);
+                return true;
+            } else {
+                cb(false);
+                return false;
+            }
+        }
+    };
     
     const { Tweet, User } = require("./objects");
     module.exports.Tweet = Tweet;

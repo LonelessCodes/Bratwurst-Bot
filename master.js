@@ -47,7 +47,7 @@ const workers = [
     new Worker("generate.js"),
     new Worker("mentions.js"),
     new Worker("retweet.js"),
-    new Worker("stats.js"),
+    new Worker("stats.js")
 ];
 
 // prepare
