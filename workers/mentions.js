@@ -51,7 +51,6 @@ async function ontweet(tweetObj, user) {
     // some people accidentially use double spaces for weird reasons :/
     while (message.indexOf("  ") > -1) message = message.replace("  ", " ");
 
-    // now continue setting consts
     const tweetID = tweetObj.id_str;
     const ignored = await database.isIgnoredNoThrow(username);
 
@@ -159,9 +158,9 @@ async function ontweet(tweetObj, user) {
     } else if (messageHas(bot_name + " stats") > -1) {
 
         // Stats
-        const snap = await database.ref("tweets").once("value");
+        const tweets = await database.ref("tweets").once("value");
         const users = {};
-        snap.forEach(tweet => {
+        tweets.forEach(tweet => {
             const id = tweet.child("user/id").val();
             users[id] ? users[id]++ : users[id] = 1;
         });

@@ -143,7 +143,7 @@ async function week() {
     const arr = [];
     for (let user of honorable_mentions) {
         const str = `@${user.name} (${user.value}`;
-        if (string + [...arr, str].join(", ") > 140) break;
+        if (string + [...arr, str].join(", ").length > 140) break;
         arr.push(str);
     }
     string += arr.join(", ");
