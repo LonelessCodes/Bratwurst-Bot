@@ -44,7 +44,7 @@ async function year() {
 
     // create best user GIF
     const { buf, best, honorable_mentions } = await getStats.getUser();
-    string = `Top Bratwurst tweeter of the year is @${best.name} with ${best.value} tweets. Congratulations!!! 🎆✨🌭🍻`;
+    string = `Top Bratwurst tweeter of the year is @${best.name} with ${best.value} ${best.value === 1 ? "tweet" : "tweets"}. Congratulations!!! 🎆✨🌭🍻`;
     const tweet = await twitter.tweetPromise(string, { media: [buf] });
     log(string);
 
@@ -101,7 +101,7 @@ async function month() {
 
     // create best user GIF
     const { buf, best, honorable_mentions } = await getStats.getUser();
-    string = `Top Bratwurst tweeter of the month is @${best.name} with ${best.value} tweets. Congratulations!!! 🎆✨🌭`;
+    string = `Top Bratwurst tweeter of the month is @${best.name} with ${best.value} ${best.value === 1 ? "tweet" : "tweets"}. Congratulations!!! 🎆✨🌭`;
     const tweet = await twitter.tweetPromise(string, { media: [buf] });
     log(string);
 
@@ -134,7 +134,7 @@ async function week() {
         honorable_mentions
     } = await getStats.getUser();
     let string =
-        `Top Bratwurst tweeter of the week is @${best.name} with ${best.value === 1 ? "tweet" : "tweets"}. Congratulations!!!`;
+        `Top Bratwurst tweeter of the week is @${best.name} with ${best.value} ${best.value === 1 ? "tweet" : "tweets"}. Congratulations!!!`;
     const tweet = await twitter.tweetPromise(string, { media: [buf] });
     log(string);
 
