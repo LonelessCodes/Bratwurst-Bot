@@ -43,7 +43,7 @@ const reply = {
 async function ontweet(tweetObj, user) {
     const start = now(); // set timestamp of the request
     let message = tweetObj.text.toLowerCase();
-    const messageHas = query => message.indexOf(query);
+    const messageHas = message.indexOf;
     const username = user.screen_name;
 
     if (username === twitter.botName || /^rt/.test(message)) return;

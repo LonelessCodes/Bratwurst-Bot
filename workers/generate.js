@@ -1,4 +1,4 @@
-const { tweet } = require("../modules/twitter");
+const { tweet, limit } = require("../modules/twitter");
 const database = require("../modules/database");
 const MarkovChar = require("../lib/markov.js");
 const MarkovWord = require("../lib/markov-word.js");
@@ -14,13 +14,13 @@ const hashtag = " #bot";
 // character level Markov chain
 const n = 8;
 const markovChar = {};
-markovChar["en"] = new MarkovChar(n, 140 - hashtag.length - 1);
-markovChar["de"] = new MarkovChar(n, 140 - hashtag.length - 1);
+markovChar["en"] = new MarkovChar(n, limit - hashtag.length - 1);
+markovChar["de"] = new MarkovChar(n, limit - hashtag.length - 1);
 
 // word level markov chain
 const markovWord = {};
-markovWord["en"] = new MarkovWord(2, 140 - hashtag.length - 1);
-markovWord["de"] = new MarkovWord(2, 140 - hashtag.length - 1);
+markovWord["en"] = new MarkovWord(2, limit - hashtag.length - 1);
+markovWord["de"] = new MarkovWord(2, limit - hashtag.length - 1);
 
 const tweets = database.ref("tweets");
 tweets.once("value", snap => {
