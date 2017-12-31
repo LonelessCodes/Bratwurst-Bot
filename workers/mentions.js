@@ -1,9 +1,8 @@
 const twitter = require("../modules/twitter");
 const database = require("../modules/database");
+const pixabay = require("../modules/pixabay");
 const utils = require("../modules/utils");
 const log = require("../modules/log");
-const fs = require("fs");
-const { promisify } = require("util");
 
 const now = time => {
     if (time !== void 0) return new Date(time).getTime();
@@ -43,13 +42,13 @@ const reply = {
 async function ontweet(tweetObj, user) {
     const start = now(); // set timestamp of the request
     let message = tweetObj.text.toLowerCase();
-    const messageHas = message.indexOf;
+    const messageHas = query => message.indexOf(query);
     const username = user.screen_name;
 
     if (username === twitter.botName || /^rt/.test(message)) return;
 
     // some people accidentially use double spaces for weird reasons :/
-    while (message.indexOf("  ") > -1) message = message.replace("  ", " ");
+    while (messageHas("  ") > -1) message = message.replace("  ", " ");
 
     const tweetID = tweetObj.id_str;
     const ignored = await database.isIgnoredNoThrow(username);
@@ -66,7 +65,7 @@ async function ontweet(tweetObj, user) {
     };
     function send() {
         returnValue.push(`[${utils.time(start, now())}]`);
-        return twitter.tweet(returnValue.join(" "), params).catch(err => {
+        return twitter.tweetPromise(returnValue.join(" "), params).catch(err => {
             if (err) return log("ERROR: ", err);
         });
     }
@@ -142,18 +141,15 @@ async function ontweet(tweetObj, user) {
         returnValue.push("There you go");
         params.media = ["images/help.jpg"];
         log(`@${username} requested help`);
-        return; // prevent script from sending twice
 
     } else if (messageHas(bot_name + " random image") > -1) {
 
         // Random Image
-        const images = await promisify(fs.readdir)("images/bratwursts");
-        const index = Math.floor(Math.random() * images.length);
+        const random = await pixabay.randomWurst();
 
-        returnValue.push("Have a bite");
-        params.media = ["images/bratwursts/" + images[index]];
-        log("@" + username + "requested an image. Given image /bratwursts/" + images[index]);
-        return; // sending the tweet link it is => prevent script from sending twice
+        returnValue.push(`Have a bite!\n\nSource: ${random.source}`);
+        params.media = [random.image];
+        log("@" + username + " requested an image. Given image " + random.source);
 
     } else if (messageHas(bot_name + " stats") > -1) {
 
@@ -195,7 +191,9 @@ async function ontweet(tweetObj, user) {
     if (returnValue.join(" ") !== baseValue) await send();
 }
 twitter.stream("@" + twitter.botName, (...a) => {
-    ontweet(...a).catch(err => log("ERROR:", err));
+    ontweet(...a).catch(err => {
+        log("ERROR:", err);
+    });
 }, 30);
 
 const stream = twitter.client.stream("user");
