@@ -39,12 +39,13 @@ async function year() {
     //     ]
     // }, err => {
     //     if (err) return log(err);
-    //     log(string, (string.length + 23 <= 140));
+    //     log(string, (string.length + 23 <= twitter.limit));
     // });
 
     // create best user GIF
     const { buf, best, honorable_mentions } = await getStats.getUser();
-    string = `Top Bratwurst tweeter of the year is @${best.name} with ${best.value} ${best.value === 1 ? "tweet" : "tweets"}. Congratulations!!! 🎆✨🌭🍻`;
+    string = `Happy New Year ${(new Date()).getFullYear()}!\n` +
+    `Top Bratwurst tweeter of the year is @${ best.name } with ${ best.value } ${ best.value === 1 ? "tweet" : "tweets" }.Congratulations!!! 🎆✨🌭🍻`;
     const tweet = await twitter.tweetPromise(string, { media: [buf] });
     log(string);
 
@@ -53,7 +54,7 @@ async function year() {
     const arr = [];
     for (let user of honorable_mentions) {
         const str = `@${user.name} (${user.value}`;
-        if (string + [...arr, str].join(", ") > 140) break;
+        if (string + [...arr, str].join(", ").length > twitter.limit) break;
         arr.push(str);
     }
     string += arr.join(", ");
@@ -96,7 +97,7 @@ async function month() {
         ]
     }, err => {
         if (err) return log(err);
-        log(string, (string.length + 23 <= 140));
+        log(string, (string.length + 23 <= twitter.limit));
     });
 
     // create best user GIF
@@ -110,7 +111,7 @@ async function month() {
     const arr = [];
     for (let user of honorable_mentions) {
         const str = `@${user.name} (${user.value}`;
-        if (string + [...arr, str].join(", ") > 140) break;
+        if (string + [...arr, str].join(", ").length > twitter.limit) break;
         arr.push(str);
     }
     string += arr.join(", ");
@@ -143,7 +144,7 @@ async function week() {
     const arr = [];
     for (let user of honorable_mentions) {
         const str = `@${user.name} (${user.value}`;
-        if (string + [...arr, str].join(", ") > 140) break;
+        if (string + [...arr, str].join(", ").length > twitter.limit) break;
         arr.push(str);
     }
     string += arr.join(", ");

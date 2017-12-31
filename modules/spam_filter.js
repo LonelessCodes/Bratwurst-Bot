@@ -13,7 +13,6 @@ class SpamFilter {
         const compareString = utils.cleanText(tweetObj).toLowerCase().replace(/[^a-zA-Z0-9 ]/g, "");
 
         for (let string of this.strings) {
-            console.log(string, "|", compareString, "|", compareTwoStrings(string, compareString).toFixed(2));
             if (compareTwoStrings(string, compareString) > 0.9) {
                 throw new Error("Spamfilter is blocking.");
             }

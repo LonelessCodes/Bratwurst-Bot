@@ -1,6 +1,6 @@
 const fs = require("fs");
 const path = require("path");
-const { tweet, stream, botName } = require("../modules/twitter");
+const { tweet, stream, botName, limit } = require("../modules/twitter");
 const log = require("../modules/log");
 const utils = require("../modules/utils");
 const curve = require("../modules/curve");
@@ -137,9 +137,9 @@ stream("#onabratwurst", tweetObject => {
             let response = returnValue.join(" ");
             const timestamp = ` [${utils.time(start, Date.now())}]`;
 
-            // handle these 140 characters
-            if ((response.length + timestamp.length) > 140) {
-                response = response.substring(0, 140 - 3 - timestamp.length) + "...";
+            // handle these 280 characters
+            if ((response.length + timestamp.length) > limit) {
+                response = response.substring(0, limit - 3 - timestamp.length) + "...";
             }
 
             tweet(response + timestamp, {

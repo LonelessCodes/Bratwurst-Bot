@@ -142,3 +142,5 @@ module.exports.post = promisify(client.post);
 module.exports.client = client;
 
 module.exports.botName = "Bratwurst_bot";
+
+module.exports.limit = 280;

@@ -1,14 +1,15 @@
 {
   "name": "bratwurstbot",
-  "version": "3.4.11",
+  "version": "3.5.0",
   "description": "A bot that retweets all things bratwurst",
   "main": "master.js",
   "dependencies": {
-    "canvas-prebuilt": "^1.6.0",
+    "canvas-prebuilt": "^1.6.5-prerelease.1",
     "colors": "^1.1.2",
     "cron": "^1.2.1",
     "firebase-admin": "^4.2.1",
     "gifencoder": "^1.0.6",
+    "request": "^2.83.0",
     "string-similarity": "^1.2.0",
     "twit": "^2.2.5"
   },
