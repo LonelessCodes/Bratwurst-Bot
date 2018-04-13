@@ -13,6 +13,12 @@ const palette = require("./palette.json");
 
 const bratwurst = new Font(path.join(__dirname, "..", "..", "images", "font", "bratwurst.json"));
 
+function fontFile (name) {
+    return path.join(__dirname, "..", "..", "lib", "fonts", name);
+}
+Canvas.registerFont(fontFile("Comfortaa-Regular.ttf"), { family: "comfortaa" });
+Canvas.registerFont(fontFile("Comfortaa-Bold.ttf"), { family: "comfortaa", weight: "bold" });
+
 /**
  * BEST USER
  */
@@ -29,7 +35,7 @@ function canvas(time, name) {
         encoder.setDelay(300);  // frame delay in ms 
         encoder.setQuality(10); // image quality. 10 is default. 
 
-        const img = new Canvas(width, height);
+        const img = Canvas.createCanvas(width, height);
         const ctx = img.getContext("2d");
 
         const textsub = bratwurst.text(time + "'s favorite", { spacing: 20, color: palette.yellow });
@@ -68,7 +74,7 @@ function canvas(time, name) {
             ctx.fillRect(0, height / 7 - 3, width / 7, 3);
 
             ctx.fillStyle = palette.white;
-            ctx.font = `${1.6}px bold`;
+            ctx.font = `${1.6}px comfortaa`;
             const te = ctx.measureText("@bratwurst_bot");
             ctx.fillText("@bratwurst_bot", width / 7 - te.width - 1, height / 7 - 1);
             ctx.restore();

@@ -1,3 +1,4 @@
+const path = require("path");
 let Canvas;
 try {
     Canvas = require("canvas");
@@ -13,6 +14,13 @@ const {
     white
 } = require("../palette.json");
 
+function fontFile (name) {
+    return path.join(__dirname, "..", "..", "..", "lib", "fonts", name);
+}
+
+Canvas.registerFont(fontFile("Comfortaa-Regular.ttf"), { family: "comfortaa" });
+Canvas.registerFont(fontFile("Comfortaa-Bold.ttf"), { family: "comfortaa", weight: "bold" });
+
 const r = 20.48;
 
 /**
@@ -22,7 +30,7 @@ module.exports.times = function times(opts) {
     try {
         const height = 70;
         const width = 100;
-        const img = new Canvas(Math.floor(width * r), Math.floor(height * r));
+        const img = Canvas.createCanvas(Math.floor(width * r), Math.floor(height * r));
         const ctx = img.getContext("2d");
 
         // just use percentage later on. That's easier. So we have to scale the matrix first
@@ -38,7 +46,7 @@ module.exports.times = function times(opts) {
          * HEADER
          */
         ctx.fillStyle = dark;
-        ctx.font = `bold ${4.3}px regular`;
+        ctx.font = `bold ${4.3}px comfortaa`;
         ctx.fillText(`Bratwurst Stats of ${opts.monthName}, ${opts.yearName}`, 4, 8);
 
         const piece = Math.PI * 2 / 12;
@@ -74,7 +82,7 @@ module.exports.times = function times(opts) {
         ctx.fillRect(44, 14.5, 4, 34.5);
         // zero
         ctx.fillStyle = dark;
-        ctx.font = `${2.8}px regular`;
+        ctx.font = `${2.8}px comfortaa`;
         ctx.fillText("0", 46 - ctx.measureText("0").width / 2, 50.5);
         // max
         let text = Math.round(opts.maxTime).toString();
@@ -118,7 +126,7 @@ module.exports.times = function times(opts) {
         ctx.fillRect(width - 48, 14.5, 4, 34.5);
         // zero
         ctx.fillStyle = dark;
-        ctx.font = `${2.8}px regular`;
+        ctx.font = `${2.8}px comfortaa`;
         ctx.fillText("0", width - 46 - ctx.measureText("0").width / 2, 50.5);
         // max
         text = Math.round(opts.maxMonth).toString();
@@ -128,7 +136,7 @@ module.exports.times = function times(opts) {
          * PIE TEXT
          */
         ctx.fillStyle = dark;
-        ctx.font = `${1.2}px regular`;
+        ctx.font = `${1.2}px comfortaa`;
         // daytime
         for (let i = 0; i < 12; i++) {
             ctx.beginPath();
@@ -160,7 +168,7 @@ module.exports.times = function times(opts) {
         ctx.fillRect(0, offsetY, width, height - offsetY);
 
         ctx.fillStyle = white;
-        ctx.font = `${2.6}px regular`;
+        ctx.font = `${2.6}px comfortaa`;
         ctx.fillText("Average Bratwurst activity", 4, offsetY + 5);
         ctx.fillText("per hour", 4, offsetY + 5 + 4.5, 36);
 
@@ -174,7 +182,7 @@ module.exports.times = function times(opts) {
         ctx.fillRect(0, height - 4, width, 4);
 
         ctx.fillStyle = white;
-        ctx.font = `${1.6}px regular`;
+        ctx.font = `${1.6}px comfortaa`;
         const te = ctx.measureText("@bratwurst_bot");
         ctx.fillText("@bratwurst_bot", width - te.width - 1, height - 1.4);
         ctx.fillText(`generated in ${Date.now() - opts.renderTime}ms`, 1, height - 1.4);
@@ -192,7 +200,7 @@ module.exports.global = function global(opts) {
     try {
         const width = 106;
         const height = 65;
-        const img = new Canvas(Math.floor(width * r), Math.floor(height * r));
+        const img = Canvas.createCanvas(Math.floor(width * r), Math.floor(height * r));
         const ctx = img.getContext("2d");
 
         ctx.scale(r, r);
@@ -249,7 +257,7 @@ module.exports.global = function global(opts) {
         ctx.fillRect(0, 0, 3, h);
         // zero
         ctx.fillStyle = white;
-        ctx.font = `${2.5}px regular`;
+        ctx.font = `${2.5}px comfortaa`;
         ctx.fillText("0", 1.5 - ctx.measureText("0").width / 2, h + 3);
         // max
         let text = Math.round(opts.max).toString();
@@ -298,7 +306,7 @@ module.exports.global = function global(opts) {
 
             if (sorted[i].value / total > .03) {
 
-                ctx.font = `bold ${2}px regular`;
+                ctx.font = `bold ${2}px comfortaa`;
                 ctx.fillStyle = purple;
                 const angle = (progress + sorted[i].value / 2) * digit - Math.PI / 2;
                 const w = ctx.measureText(sorted[i].id).width;
@@ -322,11 +330,11 @@ module.exports.global = function global(opts) {
          * HEADER
          */
         ctx.fillStyle = white;
-        ctx.font = `bold ${3}px regular`;
+        ctx.font = `bold ${3}px comfortaa`;
         text = `Number of Bratwurst tweets with geo tag sent in ${opts.monthName}, ${opts.yearName} by country`;
         const m = ctx.measureText(text);
         if (m.width > (width - 8))
-            ctx.font = `bold ${3 * ((width - 8) / m.width)}px regular`;
+            ctx.font = `bold ${3 * ((width - 8) / m.width)}px comfortaa`;
         ctx.fillText(text, 4, 57);
 
         /**
@@ -336,7 +344,7 @@ module.exports.global = function global(opts) {
         ctx.fillRect(0, height - 4, width, 4);
 
         ctx.fillStyle = purple;
-        ctx.font = `${1.6}px regular`;
+        ctx.font = `${1.6}px comfortaa`;
         const te = ctx.measureText("@bratwurst_bot");
         ctx.fillText("@bratwurst_bot", width - te.width - 1, height - 1.4);
         ctx.fillText(`generated in ${Date.now() - opts.renderTime}ms`, 1, height - 1.4);
@@ -390,7 +398,7 @@ module.exports.source = function source(opts) {
     try {
         const width = 100;
         const height = 100;
-        const img = new Canvas(Math.floor(width * r), Math.floor(height * r));
+        const img = Canvas.createCanvas(Math.floor(width * r), Math.floor(height * r));
         const ctx = img.getContext("2d");
 
         ctx.scale(r, r);
@@ -427,7 +435,7 @@ module.exports.source = function source(opts) {
 
             if (height > 2) {
                 const f = Math.min(4, height - 0.5);
-                ctx.font = `bold ${f}px regular`;
+                ctx.font = `bold ${f}px comfortaa`;
                 ctx.fillStyle = green;
                 const text = (percent * 100).toFixed(1) + "%";
                 const w = ctx.measureText(text).width;
@@ -436,7 +444,7 @@ module.exports.source = function source(opts) {
 
             if (height > 1.2) {
                 const f = Math.min(3.5, height);
-                ctx.font = `bold ${f}px regular`;
+                ctx.font = `bold ${f}px comfortaa`;
                 ctx.fillStyle = white;
                 ctx.fillText(opts.data[i].name, 63, y + height / 2 + f / 2.6);
             }
@@ -452,11 +460,11 @@ module.exports.source = function source(opts) {
         ctx.fillRect(0, 86, width, 10);
 
         ctx.fillStyle = white;
-        ctx.font = `bold ${3}px regular`;
+        ctx.font = `bold ${3}px comfortaa`;
         text = `Most used apps to tweet about Bratwursts in ${opts.monthName}, ${opts.yearName}`;
         const m = ctx.measureText(text);
         if (m.width > (width - 8))
-            ctx.font = `bold ${3 * ((width - 8) / m.width)}px regular`;
+            ctx.font = `bold ${3 * ((width - 8) / m.width)}px comfortaa`;
         ctx.fillText(text, 4, 92);
 
         /**
@@ -466,7 +474,7 @@ module.exports.source = function source(opts) {
         ctx.fillRect(0, height - 4, width, 4);
 
         ctx.fillStyle = purple;
-        ctx.font = `${1.6}px regular`;
+        ctx.font = `${1.6}px comfortaa`;
         const te = ctx.measureText("@bratwurst_bot");
         ctx.fillText("@bratwurst_bot", width - te.width - 1, height - 1.4);
         ctx.fillText(`generated in ${Date.now() - opts.renderTime}ms`, 1, height - 1.4);

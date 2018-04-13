@@ -32,7 +32,7 @@ class Font {
         }
         width -= options.spacing * (text.length - 1);
 
-        const canvas = new Canvas(width, height);
+        const canvas = Canvas.createCanvas(width, height);
         const ctx = canvas.getContext("2d");
         let x = 0;
         for (let i = 0; i < text.length; i++) {

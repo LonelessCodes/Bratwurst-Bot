@@ -14,6 +14,13 @@ try {
 const palette = require("../modules/stats/palette.json");
 const grey = "#5B4A3E";
 
+function fontFile (name) {
+    return path.join(__dirname, "..", "lib", "fonts", name);
+}
+
+Canvas.registerFont(fontFile("danielbd.ttf"), { family: "danielbd" });
+Canvas.registerFont(fontFile("Comfortaa-Regular.ttf"), { family: "comfortaa" });
+
 stream("#onabratwurst", tweetObject => {
     try {
         const start = Date.now();
@@ -36,7 +43,7 @@ stream("#onabratwurst", tweetObject => {
         let width = 3072 / 2 - 420;
         let height = 2048 / 2 - 340;
         const r = width / 100;
-        const img = new Canvas(width, height);
+        const img = Canvas.createCanvas(width, height);
         const ctx = img.getContext("2d");
         
         // width /= r;
@@ -54,7 +61,7 @@ stream("#onabratwurst", tweetObject => {
         /**
          * Overlay canvas
          */
-        const overlay = new Canvas(width, height);
+        const overlay = Canvas.createCanvas(width, height);
         const overctx = overlay.getContext("2d");
 
         overctx.save();
@@ -71,10 +78,10 @@ stream("#onabratwurst", tweetObject => {
         overctx.save();
         overctx.translate(-300, -200);
 
-        overctx.font = "50px regular";
+        overctx.font = "50px danielbd";
         let length = overctx.measureText(text).width;
         if (length > width - 300) {
-            overctx.font = `${50 * ((width - 300) / (length / 2))}px regular`;
+            overctx.font = `${50 * ((width - 300) / (length / 2))}px danielbd`;
             length = length * ((width - 300) / (length / 2));
             const t = text.length;
             const v = (width - 300) / length;
@@ -107,7 +114,7 @@ stream("#onabratwurst", tweetObject => {
         ctx.fillRect(0, height - 4*r, width, 4*r);
 
         ctx.fillStyle = palette.white;
-        ctx.font = `${1.6*r}px regular`;
+        ctx.font = `${1.6*r}px comfortaa`;
         const te = ctx.measureText("@bratwurst_bot");
         ctx.fillText("@bratwurst_bot", width - te.width - 1*r, height - 1.4*r);
 

@@ -103,6 +103,7 @@ async function sourceFunc(tweets) {
     }).sort(function (a, b) {
         return b.value - a.value;
     });
+    if (data.length === 0) throw new Error("Not enough data for monthly stats. Data length is 0");
 
     const buf = canvas.source({
         data,
